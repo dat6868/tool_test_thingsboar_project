@@ -1,0 +1,29 @@
+HƯỚNG DẪN TRIỂN KHAI NHANH 2 CÔNG CỤ (BOMB DROPPER WEB & DEVICE SIMULATOR) TRÊN SERVER
+
+Bước 1: Đi tới thư mục gốc (nơi chứa cả 2 thư mục tool)
+cd ~/tool_test_thingsboar_project
+
+Bước 2: Tạo và kích hoạt môi trường ảo (venv) dùng chung
+python3 -m venv venv
+source venv/bin/activate
+
+Bước 3: Cài đặt thư viện cho cả 2 tool
+pip install -r ToolsDevice/requirements.txt
+pip install -r bomb_dropper_web/requirements.txt
+
+Bước 4: Khởi động ngầm Tool Device (Cổng 6366)
+cd ToolsDevice
+nohup ../venv/bin/locust -f Device1.py --web-host 0.0.0.0 --web-port 6366 > device_sim.log 2>&1 &
+cd ..
+
+Bước 5: Khởi động ngầm Tool Web (Cổng 6368)
+cd bomb_dropper_web
+nohup ../venv/bin/uvicorn main:app --host 0.0.0.0 --port 6368 --no-access-log > server.log 2>&1 &
+cd ..
+
+---
+LƯU Ý QUAN TRỌNG: 
+1. Bạn phải mở tường lửa (Firewall) cho cổng 6366 và 6368 (sudo ufw allow 6366/tcp && sudo ufw allow 6368/tcp)
+2. Sau khi chạy xong, dùng trình duyệt truy cập:
+   - Tool Device (Locust): http://<IP_MÁY_ẢO>:6366
+   - Tool Web (Bomb Dropper): http://<IP_MÁY_ẢO>:6368

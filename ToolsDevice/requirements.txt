@@ -1,2 +1,4 @@
 locust
 paho-mqtt
+zope.event
+zope.interface
