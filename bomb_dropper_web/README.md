@@ -5,7 +5,7 @@
 ## 1. Cài đặt thư viện
 Chạy lệnh sau để cài đặt các thư viện lõi:
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt --break-system-packages
 ```
 
 ## 2. Cách chạy bình thường (Có giao diện Log trên Terminal)
