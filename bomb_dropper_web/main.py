@@ -3,6 +3,8 @@ import aiohttp
 import time
 import re
 import requests
+import json
+import os
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -81,6 +83,23 @@ class EngineState:
 
 state = EngineState()
 
+def save_server_state():
+    try:
+        with open("server_state.json", "w", encoding="utf-8") as f:
+            json.dump({"is_locked": state.is_locked, "lock_password": state.lock_password}, f)
+    except: pass
+
+def load_server_state():
+    if os.path.exists("server_state.json"):
+        try:
+            with open("server_state.json", "r", encoding="utf-8") as f:
+                d = json.load(f)
+                state.is_locked = d.get("is_locked", False)
+                state.lock_password = d.get("lock_password")
+        except: pass
+
+load_server_state()
+
 def push_log(msg: str):
     ts = time.strftime('%H:%M:%S')
     state.logs.append(f"[{ts}] {msg}")
@@ -117,6 +136,7 @@ async def lock_session(req: LockRequest):
         return {"status": "error", "message": "Mật khẩu không được để trống!"}
     state.is_locked = True
     state.lock_password = req.password
+    save_server_state()
     return {"status": "success"}
 
 @app.post("/api/unlock")
@@ -127,6 +147,24 @@ async def unlock_session(req: LockRequest):
         return {"status": "error", "message": "Sai mật khẩu mở khóa!"}
     state.is_locked = False
     state.lock_password = None
+    save_server_state()
+    return {"status": "success"}
+
+@app.get("/api/database")
+async def get_database():
+    if os.path.exists("database.json"):
+        try:
+            with open("database.json", "r", encoding="utf-8") as f:
+                return json.loads(f.read())
+        except Exception:
+            pass
+    return {}
+
+@app.post("/api/database")
+async def save_database(req: Request):
+    data = await req.json()
+    with open("database.json", "w", encoding="utf-8") as f:
+        json.dump(data, f)
     return {"status": "success"}
 
 @app.post("/api/login")

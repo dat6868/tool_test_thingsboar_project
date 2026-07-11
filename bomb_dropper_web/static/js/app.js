@@ -504,4 +504,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setInterval(pollBasicStatus, 500);
 
+    // ==========================================
+    // DATABASE SAVE/LOAD LOGIC
+    // ==========================================
+    function saveStateToLocal() {
+        const state = {
+            url: document.getElementById('server-url').value,
+            username: document.getElementById('username').value,
+            jwtToken: jwtToken,
+            apis: [],
+            basicApis: []
+        };
+        
+        document.querySelectorAll('.api-item:not(.basic-api-item)').forEach(item => {
+            state.apis.push({
+                name: item.querySelector('.api-title').textContent.replace(':', ''),
+                curl: item.querySelector('textarea').value,
+                rate: item.querySelector('.api-rate').value,
+                step: item.querySelector('.api-step').value
+            });
+        });
+
+        document.querySelectorAll('.basic-api-item').forEach(item => {
+            state.basicApis.push({
+                name: item.querySelector('.api-title').textContent.replace(':', ''),
+                curl: item.querySelector('textarea').value,
+                interval: item.querySelector('.api-interval').value
+            });
+        });
+
+        fetch('/api/database', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
+        }).catch(e => console.error("Lỗi lưu DB", e));
+    }
+
+    async function loadStateFromLocal() {
+        try {
+            const res = await fetch('/api/database');
+            const state = await res.json();
+            
+            if (Object.keys(state).length === 0) return;
+            
+            if (state.url) document.getElementById('server-url').value = state.url;
+            if (state.username) document.getElementById('username').value = state.username;
+            if (state.jwtToken) jwtToken = state.jwtToken;
+            
+            if (state.apis && state.apis.length > 0) {
+                state.apis.forEach(api => {
+                    apiCount++;
+                    const id = `api-${apiCount}`;
+                    const html = `
+                        <div class="api-item" id="${id}">
+                            <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${api.name}:</label>
+                            <textarea placeholder="Dán lệnh cURL vào đây...">${api.curl}</textarea>
+                            <div class="api-config-row">
+                                <div class="api-rates">
+                                    <label>Start (req/s):</label>
+                                    <input type="number" class="api-rate" value="${api.rate}">
+                                    <label>Step/5s:</label>
+                                    <input type="number" class="api-step" value="${api.step}">
+                                </div>
+                                <button class="btn btn-secondary btn-remove" data-target="${id}">Xóa</button>
+                            </div>
+                        </div>
+                    `;
+                    apiList.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            if (state.basicApis && state.basicApis.length > 0) {
+                state.basicApis.forEach(api => {
+                    apiCountBasic++;
+                    const id = `api-basic-${apiCountBasic}`;
+                    const html = `
+                        <div class="api-item basic-api-item" id="${id}">
+                            <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${api.name}:</label>
+                            <textarea placeholder="Dán lệnh cURL vào đây...">${api.curl}</textarea>
+                            <div class="api-config-row">
+                                <div class="api-rates">
+                                    <label>Chu kỳ (giây):</label>
+                                    <input type="number" class="api-interval" value="${api.interval}">
+                                </div>
+                                <button class="btn btn-secondary btn-remove-basic" data-target="${id}">Xóa</button>
+                            </div>
+                        </div>
+                    `;
+                    apiListBasic.insertAdjacentHTML('beforeend', html);
+                });
+            }
+        } catch (e) {
+            console.error("Lỗi tải DB", e);
+        }
+    }
+
+    loadStateFromLocal();
+    setInterval(saveStateToLocal, 2000);
+
 });
