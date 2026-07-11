@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Dropper Web API</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>BOMB DROPPER</h2>
+                <div class="glow"></div>
+            </div>
+            <nav class="menu">
+                <button class="menu-btn active" data-target="basic-test">Kiểm tra cơ bản</button>
+                <button class="menu-btn" data-target="load-test">Kiểm tra hiệu năng</button>
+            </nav>
+
+            <div class="lock-container" style="margin-top: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-primary" id="btn-lock" style="width: 100%;">Khóa Tool 🔒</button>
+                <button class="btn btn-danger hidden" id="btn-unlock" style="width: 100%; z-index: 9999; pointer-events: auto;">Mở Khóa 🔓</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Server Config (Shared) -->
+            <div class="glass-card" style="margin-bottom: 1.5rem;">
+                <h3 class="card-title">Cấu hình Đăng nhập (Thingsboard)</h3>
+                <div class="input-group-row">
+                    <div class="input-box">
+                        <label>Server URL</label>
+                        <input type="text" id="server-url" value="http://localhost:8080">
+                    </div>
+                    <div class="input-box">
+                        <label>Username</label>
+                        <input type="text" id="username" value="tenant@thingsboard.org">
+                    </div>
+                    <div class="input-box">
+                        <label>Password</label>
+                        <input type="password" id="password" value="tenant">
+                    </div>
+                    <button class="btn btn-primary" id="btn-login">Lấy JWT Token</button>
+                </div>
+            </div>
+
+            <!-- Basic Test Section -->
+            <section id="basic-test" class="tab-content active">
+                <div class="two-columns-layout">
+                    <!-- API Configs -->
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách API Cần Test (Cơ bản)</h3>
+                            <button class="btn btn-secondary" id="btn-add-api-basic">+ Thêm API cURL</button>
+                        </div>
+                        <div id="api-list-basic" class="api-container">
+                            <!-- Dynamic API items will be appended here -->
+                        </div>
+                    </div>
+
+                    <!-- Monitor & Control -->
+                    <div class="glass-card monitor-card">
+                        <div class="monitor-controls">
+                            <button class="btn btn-danger btn-large" id="btn-toggle-basic">BẮT ĐẦU</button>
+                            <button class="btn btn-primary btn-large" id="btn-export-basic" style="background: #3b82f6;">XUẤT BÁO CÁO 📝</button>
+                            <div class="stats-box">
+                                <span class="stat success">Success: <strong id="stat-success-basic">0</strong></span>
+                                <span class="stat fail">Failed: <strong id="stat-fail-basic">0</strong></span>
+                            </div>
+                        </div>
+                        <div class="thresholds" id="threshold-container-basic"></div>
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <div class="terminal-body" id="log-output-basic"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Load Test Section -->
+            <section id="load-test" class="tab-content hidden">
+                <div class="two-columns-layout">
+                    <!-- API Configs -->
+                    <div class="glass-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Danh sách API Cần Test (Hiệu năng)</h3>
+                            <button class="btn btn-secondary" id="btn-add-api">+ Thêm API cURL</button>
+                        </div>
+                        <div id="api-list" class="api-container">
+                            <!-- Dynamic API items will be appended here -->
+                        </div>
+                    </div>
+
+                    <!-- Monitor & Control -->
+                    <div class="glass-card monitor-card">
+                        <div class="monitor-controls">
+                            <button class="btn btn-danger btn-large" id="btn-toggle">BẮT ĐẦU</button>
+                            <button class="btn btn-primary btn-large" id="btn-export" style="background: #3b82f6;">XUẤT BÁO CÁO 📝</button>
+                            <div class="stats-box">
+                                <span class="stat success">Success: <strong id="stat-success">0</strong></span>
+                                <span class="stat fail">Failed: <strong id="stat-fail">0</strong></span>
+                            </div>
+                        </div>
+                        <div class="thresholds" id="threshold-container"></div>
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <div class="terminal-body" id="log-output"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
