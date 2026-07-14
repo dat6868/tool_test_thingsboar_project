@@ -1,50 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bomb Dropper Web API</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>Final Door Web API</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=1.1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
+    <!-- OVERLAY ĐĂNG NHẬP PHIÊN -->
+    <div id="session-overlay" class="session-overlay">
+        <div class="session-modal">
+            <h2 style="margin-bottom: 1rem; color: var(--text-main); text-align: center;">FINAL DOOR - PHIÊN LÀM VIỆC</h2>
+            
+            <div style="display: flex; gap: 2rem;">
+                <!-- Danh sách phiên -->
+                <div style="flex: 1; border-right: 1px solid var(--border-color); padding-right: 1rem;">
+                    <h4 style="color: var(--text-muted); margin-bottom: 1rem;">Danh sách phiên</h4>
+                    <div id="overlay-session-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto;">
+                        <!-- Render danh sách phiên ở đây -->
+                    </div>
+                </div>
+                
+                <!-- Tạo phiên mới -->
+                <div style="flex: 1; padding-left: 1rem;">
+                    <h4 style="color: var(--text-muted); margin-bottom: 1rem;">Tạo phiên mới</h4>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div>
+                            <label style="color: var(--text-muted); font-size: 0.85rem;">Tên phiên</label>
+                            <input type="text" id="new-session-name" class="form-control" placeholder="Nhập tên phiên (VD: test1)">
+                        </div>
+                        <div>
+                            <label style="color: var(--text-muted); font-size: 0.85rem;">Mật khẩu (Tùy chọn)</label>
+                            <input type="password" id="new-session-password" class="form-control" placeholder="Mật khẩu khóa phiên">
+                        </div>
+                        <button class="btn btn-primary" id="btn-create-session" style="width: 100%;">Tạo & Đăng nhập</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <h2>BOMB DROPPER</h2>
+                <h2>FINAL DOOR</h2>
                 <div class="glow"></div>
             </div>
+
             <nav class="menu">
                 <button class="menu-btn active" data-target="basic-test">Kiểm tra cơ bản</button>
                 <button class="menu-btn" data-target="load-test">Kiểm tra hiệu năng</button>
             </nav>
 
-            <div class="lock-container" style="margin-top: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn btn-primary" id="btn-lock" style="width: 100%;">Khóa Tool 🔒</button>
-                <button class="btn btn-danger hidden" id="btn-unlock" style="width: 100%; z-index: 9999; pointer-events: auto;">Mở Khóa 🔓</button>
+            
+            <div class="sessions-container" style="padding: 1rem; margin-top: auto; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h4 style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">PHIÊN LÀM VIỆC</h4>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="padding: 0.5rem; background: rgba(59, 130, 246, 0.2); border: 1px solid var(--primary); border-radius: 4px; color: var(--text-main); text-align: center; font-weight: bold;">
+                        <span id="sidebar-current-session">default</span>
+                    </div>
+                    <button class="btn btn-danger" id="btn-exit-session" style="width: 100%;">Thoát phiên 🚪</button>
+                </div>
             </div>
+
+
+
+
         </aside>
 
         <!-- Main Content -->
         <main class="content">
             <!-- Server Config (Shared) -->
             <div class="glass-card" style="margin-bottom: 1.5rem;">
-                <h3 class="card-title">Cấu hình Đăng nhập (Thingsboard)</h3>
-                <div class="input-group-row">
+                <h3 class="card-title" style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--text-muted);">Cấu hình Đăng nhập (Thingsboard)</h3>
+                <div class="input-group-row" style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 1rem; align-items: stretch;">
                     <div class="input-box">
                         <label>Server URL</label>
-                        <input type="text" id="server-url" value="http://localhost:8080">
+                        <input type="text" id="server-url" value="http://localhost:8080" style="height: 100%;">
                     </div>
-                    <div class="input-box">
-                        <label>Username</label>
-                        <input type="text" id="username" value="tenant@thingsboard.org">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div class="input-box" style="min-width: 0;">
+                            <label>Username</label>
+                            <input type="text" id="username" value="tenant@thingsboard.org">
+                        </div>
+                        <div class="input-box" style="min-width: 0;">
+                            <label>Password</label>
+                            <input type="password" id="password" value="tenant">
+                        </div>
                     </div>
-                    <div class="input-box">
-                        <label>Password</label>
-                        <input type="password" id="password" value="tenant">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-primary" id="btn-login" style="flex: 1;">Đăng nhập</button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px; margin-bottom: 10px;">
+                        <button class="btn btn-secondary" id="btn-save-view" style="flex: 1; background: #0ea5e9;">Save View 💾</button>
+                        <button class="btn btn-secondary" id="btn-save-normal" style="flex: 1; background: #10b981;">Save Thường 💾</button>
                     </div>
-                    <button class="btn btn-primary" id="btn-login">Lấy JWT Token</button>
+                    <button class="btn btn-primary" id="btn-lock" style="flex: 1; background: #6366f1;">Khóa Phiên làm việc 🔒</button>
+                        <button class="btn btn-danger hidden" id="btn-unlock" style="flex: 1; z-index: 9999; pointer-events: auto;">Mở Khóa 🔓</button>
+                    </div>
                 </div>
             </div>
 
@@ -54,8 +112,13 @@
                     <!-- API Configs -->
                     <div class="glass-card">
                         <div class="card-header">
-                            <h3 class="card-title">Danh sách API Cần Test (Cơ bản)</h3>
-                            <button class="btn btn-secondary" id="btn-add-api-basic">+ Thêm API cURL</button>
+                            <h3 class="card-title">Danh sách API</h3>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-primary" id="btn-save-api-basic-view" style="padding: 0.5rem 1rem; background: #0ea5e9;">Save View 💾</button>
+                                <button class="btn btn-primary" id="btn-save-api-basic-normal" style="padding: 0.5rem 1rem; background: #10b981;">Save Thường 💾</button>
+                                <button class="btn btn-secondary" id="btn-add-api-basic" style="padding: 0.5rem 1rem;">+
+                                    Thêm API cURL</button>
+                            </div>
                         </div>
                         <div id="api-list-basic" class="api-container">
                             <!-- Dynamic API items will be appended here -->
@@ -65,8 +128,9 @@
                     <!-- Monitor & Control -->
                     <div class="glass-card monitor-card">
                         <div class="monitor-controls">
-                            <button class="btn btn-danger btn-large" id="btn-toggle-basic">BẮT ĐẦU</button>
-                            <button class="btn btn-primary btn-large" id="btn-export-basic" style="background: #3b82f6;">XUẤT BÁO CÁO 📝</button>
+                            <button class="btn btn-large" id="btn-toggle-basic" style="background: #10b981; color: white;">BẮT ĐẦU</button>
+                            <button class="btn btn-primary btn-large" id="btn-export-basic"
+                                style="background: #3b82f6;">XUẤT BÁO CÁO 📝</button>
                             <div class="stats-box">
                                 <span class="stat success">Success: <strong id="stat-success-basic">0</strong></span>
                                 <span class="stat fail">Failed: <strong id="stat-fail-basic">0</strong></span>
@@ -75,9 +139,11 @@
                         <div class="thresholds" id="threshold-container-basic"></div>
                         <div class="terminal">
                             <div class="terminal-header">
-                                <span class="dot red"></span>
-                                <span class="dot yellow"></span>
-                                <span class="dot green"></span>
+                                <span class="dot red filter-btn" data-filter="error" title="Chỉ hiện lỗi"></span>
+                                <span class="dot yellow filter-btn active" data-filter="all"
+                                    title="Hiện tất cả (Mặc định)"></span>
+                                <span class="dot green filter-btn" data-filter="success"
+                                    title="Chỉ hiện thành công"></span>
                             </div>
                             <div class="terminal-body" id="log-output-basic"></div>
                         </div>
@@ -91,8 +157,13 @@
                     <!-- API Configs -->
                     <div class="glass-card">
                         <div class="card-header">
-                            <h3 class="card-title">Danh sách API Cần Test (Hiệu năng)</h3>
-                            <button class="btn btn-secondary" id="btn-add-api">+ Thêm API cURL</button>
+                            <h3 class="card-title">Danh sách API</h3>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn btn-primary" id="btn-save-api-view" style="padding: 0.5rem 1rem; background: #0ea5e9;">Save View 💾</button>
+                                <button class="btn btn-primary" id="btn-save-api-normal" style="padding: 0.5rem 1rem; background: #10b981;">Save Thường 💾</button>
+                                <button class="btn btn-secondary" id="btn-add-api" style="padding: 0.5rem 1rem;">+ Thêm
+                                    API cURL</button>
+                            </div>
                         </div>
                         <div id="api-list" class="api-container">
                             <!-- Dynamic API items will be appended here -->
@@ -102,8 +173,9 @@
                     <!-- Monitor & Control -->
                     <div class="glass-card monitor-card">
                         <div class="monitor-controls">
-                            <button class="btn btn-danger btn-large" id="btn-toggle">BẮT ĐẦU</button>
-                            <button class="btn btn-primary btn-large" id="btn-export" style="background: #3b82f6;">XUẤT BÁO CÁO 📝</button>
+                            <button class="btn btn-large" id="btn-toggle" style="background: #10b981; color: white;">BẮT ĐẦU</button>
+                            <button class="btn btn-primary btn-large" id="btn-export" style="background: #3b82f6;">XUẤT
+                                BÁO CÁO 📝</button>
                             <div class="stats-box">
                                 <span class="stat success">Success: <strong id="stat-success">0</strong></span>
                                 <span class="stat fail">Failed: <strong id="stat-fail">0</strong></span>
@@ -112,9 +184,11 @@
                         <div class="thresholds" id="threshold-container"></div>
                         <div class="terminal">
                             <div class="terminal-header">
-                                <span class="dot red"></span>
-                                <span class="dot yellow"></span>
-                                <span class="dot green"></span>
+                                <span class="dot red filter-btn" data-filter="error" title="Chỉ hiện lỗi"></span>
+                                <span class="dot yellow filter-btn active" data-filter="all"
+                                    title="Hiện tất cả (Mặc định)"></span>
+                                <span class="dot green filter-btn" data-filter="success"
+                                    title="Chỉ hiện thành công"></span>
                             </div>
                             <div class="terminal-body" id="log-output"></div>
                         </div>
@@ -128,85 +202,119 @@
     <div id="toast" class="toast hidden"></div>
 
     <script>
-document.addEventListener('DOMContentLoaded', () => {
-    // Menu Switching
-    const menuBtns = document.querySelectorAll('.menu-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Menu Switching
+            const menuBtns = document.querySelectorAll('.menu-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
 
-    menuBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            menuBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            menuBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    menuBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
 
-            const targetId = btn.getAttribute('data-target');
-            tabContents.forEach(tab => {
-                if (tab.id === targetId) {
-                    tab.classList.remove('hidden');
-                    tab.classList.add('active');
-                } else {
-                    tab.classList.remove('active');
-                    tab.classList.add('hidden');
+                    const targetId = btn.getAttribute('data-target');
+                    tabContents.forEach(tab => {
+                        if (tab.id === targetId) {
+                            tab.classList.remove('hidden');
+                            tab.classList.add('active');
+                        } else {
+                            tab.classList.remove('active');
+                            tab.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            // Toast Notification
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                toast.textContent = message;
+                toast.style.background = type === 'success' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)';
+                toast.classList.remove('hidden');
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(20px)';
+                    setTimeout(() => toast.classList.add('hidden'), 300);
+                }, 3000);
+            }
+
+            // Terminal Filter Logic
+            document.querySelectorAll('.terminal-header').forEach(header => {
+                const body = header.nextElementSibling;
+                const btns = header.querySelectorAll('.filter-btn');
+
+                btns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        btns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        body.classList.remove('filter-error', 'filter-success');
+                        const filter = btn.getAttribute('data-filter');
+                        if (filter !== 'all') {
+                            body.classList.add('filter-' + filter);
+                        }
+                        body.scrollTop = body.scrollHeight;
+                    });
+                });
+            });
+
+            // Login Logic
+            let jwtToken = null;
+            document.getElementById('btn-login').addEventListener('click', async () => {
+                const url = document.getElementById('server-url').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const res = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url, username, password })
+                    });
+                    const data = await res.json();
+
+                    if (data.status === 'success') {
+                        jwtToken = data.token;
+                        showToast('Lấy JWT Token thành công!');
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                } catch (e) {
+                    showToast('Lỗi mạng: ' + e.message, 'error');
                 }
             });
-        });
-    });
 
-    // Toast Notification
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.style.background = type === 'success' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)';
-        toast.classList.remove('hidden');
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateY(0)';
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(20px)';
-            setTimeout(() => toast.classList.add('hidden'), 300);
-        }, 3000);
-    }
+            // Dynamic API Panels
+            const apiList = document.getElementById('api-list');
+            let apiCount = 0;
 
-    // Login Logic
-    let jwtToken = null;
-    document.getElementById('btn-login').addEventListener('click', async () => {
-        const url = document.getElementById('server-url').value;
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, username, password })
-            });
-            const data = await res.json();
-            
-            if (data.status === 'success') {
-                jwtToken = data.token;
-                showToast('Lấy JWT Token thành công!');
-            } else {
-                showToast(data.message, 'error');
+            function handleCurlPaste(e, addFunc) {
+                const text = e.clipboardData.getData('text');
+                const curls = text.split(/curl\s+/i).filter(c => c.trim().length > 0);
+                if (curls.length > 1) {
+                    e.preventDefault();
+                    curls.forEach((c, idx) => {
+                        addFunc(`API Tự động ${idx + 1}`, "curl " + c.trim());
+                    });
+                }
             }
-        } catch (e) {
-            showToast('Lỗi mạng: ' + e.message, 'error');
-        }
-    });
 
-    // Dynamic API Panels
-    const apiList = document.getElementById('api-list');
-    let apiCount = 0;
+            function addApiItem(apiName = null, initValue = "") {
+                if (!apiName) {
+                    apiName = prompt("Nhập tên gợi nhớ cho API này:", `API Hiệu năng ${apiCount + 1}`);
+                    if (!apiName) apiName = "Lệnh cURL";
+                }
 
-    document.getElementById('btn-add-api').addEventListener('click', () => {
-        let apiName = prompt("Nhập tên gợi nhớ cho API này:", `API Hiệu năng ${apiCount + 1}`);
-        if (!apiName) apiName = "Lệnh cURL";
-
-        apiCount++;
-        const id = `api-${apiCount}`;
-        const html = `
+                apiCount++;
+                const id = `api-${apiCount}`;
+                const html = `
             <div class="api-item" id="${id}">
                 <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${apiName}:</label>
-                <textarea placeholder="Dán lệnh cURL vào đây..."></textarea>
+                <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                <textarea placeholder="Dán lệnh cURL vào đây...">${initValue}</textarea>
                 <div class="api-config-row">
                     <div class="api-rates">
                         <label>Start (req/s):</label>
@@ -218,264 +326,436 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
-        apiList.insertAdjacentHTML('beforeend', html);
-    });
-
-    apiList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-remove')) {
-            const targetId = e.target.getAttribute('data-target');
-            document.getElementById(targetId).remove();
-        }
-    });
-
-    apiList.addEventListener('dblclick', (e) => {
-        if (e.target.classList.contains('api-title')) {
-            let currentName = e.target.textContent.replace(':', '');
-            let newName = prompt("Đổi tên API:", currentName);
-            if (newName && newName.trim() !== "") {
-                e.target.textContent = newName.trim() + ':';
-            }
-        }
-    });
-
-    // Engine Control & Status Polling
-    let isRunning = false;
-    let pollInterval = null;
-    const btnToggle = document.getElementById('btn-toggle');
-    const logOutput = document.getElementById('log-output');
-    const thresholdContainer = document.getElementById('threshold-container');
-
-    function addLog(msg) {
-        const isError = msg.includes('LỖI') || msg.includes('MẠCH BẢO VỆ');
-        const isWarning = msg.includes('TĂNG TỐC');
-        const div = document.createElement('div');
-        div.className = 'terminal-line';
-        if (isError) div.classList.add('error');
-        if (isWarning) div.classList.add('warning');
-        div.textContent = msg;
-        logOutput.appendChild(div);
-        logOutput.scrollTop = logOutput.scrollHeight;
-    }
-
-    // Export Logic
-    document.getElementById('btn-export').addEventListener('click', () => {
-        const apiItems = document.querySelectorAll('.api-item');
-        if (apiItems.length === 0) {
-            showToast('Không có dữ liệu API nào để xuất!', 'error');
-            return;
-        }
-
-        let report = `BÁO CÁO KẾT QUẢ LOAD TEST API - ${new Date().toLocaleString()}\n`;
-        report += "=".repeat(60) + "\n\n";
-
-        let idx = 1;
-        apiItems.forEach(item => {
-            const curl = item.querySelector('textarea').value.trim();
-            if (!curl) return;
-
-            const urlMatch = curl.match(/https?:\/\/[^\s'"]+/);
-            const url = urlMatch ? urlMatch[0] : 'N/A';
-            const methodMatch = curl.match(/-X\s+([A-Z]+)/);
-            const method = methodMatch ? methodMatch[1] : 'GET';
-
-            const rate = parseInt(item.querySelector('.api-rate').value);
-            const step = parseInt(item.querySelector('.api-step').value);
-            const apiName = item.querySelector('.api-title').textContent.replace(':', '');
-
-            report += `--- ${apiName} ---\n`;
-            report += `URL: ${url}\n`;
-            report += `Method: ${method}\n`;
-            report += `Cấu hình Test: Bắt đầu ${rate} req/s | Tăng ${step} req/s mỗi 5s\n`;
-            
-            const thresholds = Array.from(thresholdContainer.children).map(s => s.textContent);
-            if (thresholds.length > 0) {
-                report += `KẾT QUẢ: ${thresholds.join(' | ')}\n`;
-            } else {
-                report += `KẾT QUẢ: Chưa có (Hoặc Test chưa chạm ngưỡng chết)\n`;
-            }
-            report += "-".repeat(40) + "\n\n";
-            idx++;
-        });
-
-        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `load_test_report_${new Date().getTime()}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showToast('Đã tải báo cáo xuống thành công!');
-    });
-
-    async function toggleEngine() {
-        if (isRunning) {
-            // Stop
-            await fetch('/api/stop', { method: 'POST' });
-        } else {
-            // Start
-            const apiItems = document.querySelectorAll('.api-item');
-            if (apiItems.length === 0) {
-                showToast('Vui lòng thêm ít nhất 1 API', 'error');
-                return;
+                apiList.insertAdjacentHTML('beforeend', html);
+                document.getElementById(id).querySelector('textarea').addEventListener('paste', (e) => handleCurlPaste(e, addApiItem));
             }
 
-            const apis = [];
-            apiItems.forEach(item => {
-                const curl = item.querySelector('textarea').value.trim();
-                const rate = parseInt(item.querySelector('.api-rate').value);
-                const step = parseInt(item.querySelector('.api-step').value);
-                if (curl) {
-                    apis.push({ curl, rate, step });
+            document.getElementById('btn-add-api').addEventListener('click', () => addApiItem());
+
+            apiList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-remove')) {
+                    const targetId = e.target.getAttribute('data-target');
+                    document.getElementById(targetId).remove();
                 }
             });
 
-            if (apis.length === 0) {
-                showToast('Vui lòng nhập nội dung cURL', 'error');
-                return;
-            }
-
-            logOutput.innerHTML = '';
-            thresholdContainer.innerHTML = '';
-
-            const loginUrl = document.getElementById('server-url').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            const res = await fetch('/api/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: jwtToken, login_url: loginUrl, username: username, password: password, apis: apis })
-            });
-            const data = await res.json();
-            if (data.status === 'error') {
-                showToast(data.message, 'error');
-                return;
-            }
-        }
-        
-        // Trạng thái sẽ được hàm pollStatus tự động cập nhật
-    }
-
-    btnToggle.addEventListener('click', toggleEngine);
-
-    // Status Polling
-    async function pollStatus() {
-        try {
-            const res = await fetch('/api/status');
-            const data = await res.json();
-
-            updateLockUI(data.is_locked);
-
-            // Update running state & Button
-            if (data.is_running !== isRunning) {
-                isRunning = data.is_running;
-                if (isRunning) {
-                    btnToggle.textContent = 'DỪNG LẠI 🛑';
-                    btnToggle.style.background = '#f59e0b'; // orange/yellow
-                } else {
-                    btnToggle.textContent = 'BẮT ĐẦU';
-                    btnToggle.style.background = '#ef4444'; // red
+            apiList.addEventListener('dblclick', (e) => {
+                if (e.target.classList.contains('api-title')) {
+                    let currentName = e.target.textContent.replace(':', '');
+                    let newName = prompt("Đổi tên API:", currentName);
+                    if (newName && newName.trim() !== "") {
+                        e.target.textContent = newName.trim() + ':';
+                    }
                 }
+            });
+
+            // Engine Control & Status Polling
+            let isRunning = false;
+            let pollInterval = null;
+            const btnToggle = document.getElementById('btn-toggle');
+            const logOutput = document.getElementById('log-output');
+            const thresholdContainer = document.getElementById('threshold-container');
+
+            function addLog(msg) {
+                const isError = msg.includes('LỖI') || msg.includes('MẠCH BẢO VỆ');
+                const isWarning = msg.includes('TĂNG TỐC');
+                const div = document.createElement('div');
+                div.className = 'terminal-line';
+                if (isError) div.classList.add('error');
+                if (isWarning) div.classList.add('warning');
+                div.textContent = msg;
+                logOutput.appendChild(div);
+                logOutput.scrollTop = logOutput.scrollHeight;
             }
 
-            // Update Stats
-            document.getElementById('stat-success').textContent = data.stats.success;
-            document.getElementById('stat-fail').textContent = data.stats.fail;
+            // Export Logic
+            document.getElementById('btn-export').addEventListener('click', () => {
+                const apiItems = document.querySelectorAll('.api-item');
+                if (apiItems.length === 0) {
+                    showToast('Không có dữ liệu API nào để xuất!', 'error');
+                    return;
+                }
 
-            // Add logs
-            if (data.logs && data.logs.length > 0) {
-                data.logs.forEach(log => addLog(log));
-            }
+                let report = `BÁO CÁO KẾT QUẢ LOAD TEST API - ${new Date().toLocaleString()}\n`;
+                report += "=".repeat(60) + "\n\n";
 
-            // Update Thresholds
-            if (data.thresholds && data.thresholds.length > 0) {
-                thresholdContainer.innerHTML = '';
-                data.thresholds.forEach(t => {
-                    const span = document.createElement('span');
-                    span.style.color = '#ef4444';
-                    span.style.fontWeight = 'bold';
-                    span.style.display = 'block';
-                    span.textContent = t;
-                    thresholdContainer.appendChild(span);
+                let idx = 1;
+                apiItems.forEach(item => {
+                    const curl = item.querySelector('textarea').value.trim();
+                    if (!curl) return;
+
+                    const urlMatch = curl.match(/https?:\/\/[^\s'"]+/);
+                    const url = urlMatch ? urlMatch[0] : 'N/A';
+                    const methodMatch = curl.match(/-X\s+([A-Z]+)/);
+                    const method = methodMatch ? methodMatch[1] : 'GET';
+
+                    const rate = parseInt(item.querySelector('.api-rate').value);
+                    const step = parseInt(item.querySelector('.api-step').value);
+                    const apiName = item.querySelector('.api-title').textContent.replace(':', '');
+
+                    report += `--- ${apiName} ---\n`;
+                    report += `URL: ${url}\n`;
+                    report += `Method: ${method}\n`;
+                    report += `Cấu hình Test: Bắt đầu ${rate} req/s | Tăng ${step} req/s mỗi 5s\n`;
+
+                    const thresholds = Array.from(thresholdContainer.children).map(s => s.textContent);
+                    if (thresholds.length > 0) {
+                        report += `KẾT QUẢ: ${thresholds.join(' | ')}\n`;
+                    } else {
+                        report += `KẾT QUẢ: Chưa có (Hoặc Test chưa chạm ngưỡng chết)\n`;
+                    }
+                    report += "-".repeat(40) + "\n\n";
+                    idx++;
                 });
+
+                const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `load_test_report_${new Date().getTime()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('Đã tải báo cáo xuống thành công!');
+            });
+
+            async function toggleEngine() {
+                if (isRunning) {
+                    // Stop
+                    const res = await fetch('/api/stop?session_id=' + currentSessionId, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        window.location.href = '/api/download_bomb_log?session_id=' + currentSessionId;
+                        showToast('Đã dừng và tự động tải file log.');
+                    }
+                } else {
+                    // Start
+                    const apiItems = document.querySelectorAll('.api-item');
+                    if (apiItems.length === 0) {
+                        showToast('Vui lòng thêm ít nhất 1 API', 'error');
+                        return;
+                    }
+
+                    const apis = [];
+                    apiItems.forEach(item => {
+                        const name = item.querySelector('.api-title').textContent.replace(':', '').trim();
+                        const curl = item.querySelector('textarea').value.trim();
+                        const rate = parseInt(item.querySelector('.api-rate').value);
+                        const step = parseInt(item.querySelector('.api-step').value);
+                        if (curl) {
+                            apis.push({ name, curl, rate, step });
+                        }
+                    });
+
+                    if (apis.length === 0) {
+                        showToast('Vui lòng nhập nội dung cURL', 'error');
+                        return;
+                    }
+
+                    // Đã tách việc lưu API ra nút Lưu riêng
+
+                    logOutput.innerHTML = '';
+                    thresholdContainer.innerHTML = '';
+
+                    const loginUrl = document.getElementById('server-url').value;
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+
+                    const res = await fetch('/api/start?session_id=' + currentSessionId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: jwtToken, login_url: loginUrl, username: username, password: password, apis: apis })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'error') {
+                        showToast(data.message, 'error');
+                        return;
+                    }
+                }
+
+                // Trạng thái sẽ được hàm pollStatus tự động cập nhật
             }
 
-        } catch (e) {
-            console.error('Polling error', e);
-        }
-    }
+            btnToggle.addEventListener('click', toggleEngine);
 
-    // Start polling loop
-    pollInterval = setInterval(pollStatus, 500);
+            // Status Polling
+            
+            
+            // ==========================================
+            // SESSION LOGIC
+            // ==========================================
+            let currentSessionId = '';
+            const sessionOverlay = document.getElementById('session-overlay');
+            const overlaySessionList = document.getElementById('overlay-session-list');
+            
+            async function enterSession(sid) {
+                currentSessionId = sid;
+                sessionOverlay.style.display = 'none';
+                document.getElementById('sidebar-current-session').innerText = sid;
+                
+                // Reset UI
+                document.getElementById('server-url').value = 'http://localhost:8080';
+                document.getElementById('username').value = 'tenant@thingsboard.org';
+                document.getElementById('password').value = 'tenant';
+                apiList.innerHTML = '';
+                apiListBasic.innerHTML = '';
+                logOutput.innerHTML = '';
+                logOutputBasic.innerHTML = '';
+                
+                isStateLoaded = false;
+                await loadStateFromLocal();
+                
+                // Force poll once to get latest state immediately
+                pollStatus();
+                pollBasicStatus();
+            }
 
-    // ==========================================
-    // LOCK LOGIC
-    // ==========================================
-    const btnLock = document.getElementById('btn-lock');
-    const btnUnlock = document.getElementById('btn-unlock');
+            async function loadSessions() {
+                try {
+                    const res = await fetch('/api/sessions');
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        overlaySessionList.innerHTML = '';
+                        data.sessions.forEach(sid => {
+                            const html = `
+                                <div class="session-item" data-id="${sid}" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="session-name" style="font-weight: bold; flex: 1;">${sid}</span>
+                                    <button class="btn btn-danger btn-delete-session" style="padding: 0.2rem 0.5rem; background: #ef4444;" data-id="${sid}">🗑️</button>
+                                </div>
+                            `;
+                            overlaySessionList.insertAdjacentHTML('beforeend', html);
+                        });
+                        
+                        // Events
+                        document.querySelectorAll('#overlay-session-list .btn-delete-session').forEach(btn => {
+                            btn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                const sid = btn.getAttribute('data-id');
+                                const pwd = prompt(`Nhập mật khẩu để xóa phiên "${sid}" (nếu phiên đã bị khóa):`);
+                                if (pwd === null) return;
+                                
+                                try {
+                                    const res = await fetch(`/api/sessions/${sid}?password=${encodeURIComponent(pwd)}`, { method: 'DELETE' });
+                                    const resData = await res.json();
+                                    if (resData.status === 'success') {
+                                        showToast(`Đã xóa phiên ${sid}`);
+                                        if (currentSessionId === sid) {
+                                            location.reload(); // reload if deleting active session
+                                        } else {
+                                            loadSessions();
+                                        }
+                                    } else {
+                                        showToast(resData.message, 'error');
+                                    }
+                                } catch(err) {
+                                    showToast('Lỗi khi xóa phiên', 'error');
+                                }
+                            });
+                        });
+                        
+                        document.querySelectorAll('#overlay-session-list .session-item').forEach(item => {
+                            item.addEventListener('click', async (e) => {
+                                if (e.target.closest('.btn-delete-session')) return;
+                                const sid = item.getAttribute('data-id');
+                                await enterSession(sid);
+                            });
+                        });
+                    }
+                } catch(e) {
+                    console.error("Lỗi tải danh sách session", e);
+                }
+            }
+            
+            document.getElementById('btn-create-session').addEventListener('click', async () => {
+                const sid = document.getElementById('new-session-name').value.trim();
+                const pwd = document.getElementById('new-session-password').value;
+                if (!sid) {
+                    showToast("Vui lòng nhập tên phiên", "error");
+                    return;
+                }
+                
+                const res = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({session_id: sid, password: pwd || null})
+                });
+                const data = await res.json();
+                if (data.status === 'error') {
+                    if (data.message.includes("hết vị trí")) {
+                        alert(data.message);
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                } else {
+                    await enterSession(sid);
+                }
+            });
+            
+            document.getElementById('btn-exit-session').addEventListener('click', async () => {
+                // Tự động lưu cấu hình và API (save thường - tối ưu) trước khi thoát
+                saveStateToLocal(false);
 
-    btnLock.addEventListener('click', async () => {
-        const pwd = prompt("Nhập mã PIN để khóa Tool (Ví dụ: 1234):");
-        if (!pwd) return;
+                // Tự động khóa khi thoát phiên (gọi api/lock ko cần pass vì pass đã fix)
+                await fetch('/api/lock?session_id=' + currentSessionId, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({password: ""}) // password optional
+                });
+                currentSessionId = '';
+                updateLockUI(false);
+                sessionOverlay.style.display = 'flex';
+                loadSessions();
+            });
+            
+            // Lock Button Override - Không cần prompt pass nữa
+            const oldLockBtn = document.getElementById('btn-lock');
+            const newLockBtn = oldLockBtn.cloneNode(true);
+            oldLockBtn.parentNode.replaceChild(newLockBtn, oldLockBtn);
+            
+            newLockBtn.addEventListener('click', async () => {
+                const res = await fetch('/api/lock?session_id=' + currentSessionId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: "" })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    updateLockUI(true);
+                    showToast('Đã khóa phiên làm việc!');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
 
-        const res = await fetch('/api/lock', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pwd })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-            showToast('Đã khóa Tool thành công!');
-        } else {
-            showToast(data.message, 'error');
-        }
-    });
+            loadSessions();
 
-    btnUnlock.addEventListener('click', async () => {
-        const pwd = prompt("Nhập mã PIN để MỞ KHÓA:");
-        if (!pwd) return;
+            let lastLogId = -1;
 
-        const res = await fetch('/api/unlock', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: pwd })
-        });
-        const data = await res.json();
-        if (data.status === 'success') {
-            showToast('Đã mở khóa thành công!');
-        } else {
-            showToast(data.message, 'error');
-        }
-    });
 
-    function updateLockUI(isLocked) {
-        if (isLocked) {
-            document.body.classList.add('locked-mode');
-            btnLock.classList.add('hidden');
-            btnUnlock.classList.remove('hidden');
-        } else {
-            document.body.classList.remove('locked-mode');
-            btnLock.classList.remove('hidden');
-            btnUnlock.classList.add('hidden');
-        }
-    }
+            async function pollStatus() {
+                if (!currentSessionId) return;
 
-    // ==========================================
-    // BASIC TEST LOGIC
-    // ==========================================
-    const apiListBasic = document.getElementById('api-list-basic');
-    let apiCountBasic = 0;
+                try {
+                    const res = await fetch('/api/status?session_id=' + currentSessionId + '&last_id=' + lastLogId);
+                    const data = await res.json();
 
-    document.getElementById('btn-add-api-basic').addEventListener('click', () => {
-        let apiName = prompt("Nhập tên gợi nhớ cho API này:", `API Cơ bản ${apiCountBasic + 1}`);
-        if (!apiName) apiName = "Lệnh cURL";
+                    updateLockUI(data.is_locked);
 
-        apiCountBasic++;
-        const id = `api-basic-${apiCountBasic}`;
-        const html = `
+                    // Update running state & Button
+                    if (data.is_running !== isRunning) {
+                        isRunning = data.is_running;
+                        if (isRunning) {
+                            btnToggle.textContent = 'DỪNG LẠI 🛑';
+                            btnToggle.style.background = '#f59e0b'; // orange/yellow
+                        } else {
+                            btnToggle.textContent = 'BẮT ĐẦU';
+                            btnToggle.style.background = '#10b981'; // green
+                        }
+                    }
+
+                    // Update Stats
+                    document.getElementById('stat-success').textContent = data.stats.success;
+                    document.getElementById('stat-fail').textContent = data.stats.fail;
+
+                    // Add logs
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(log => addLog(log.msg));
+                    }
+                    if (data.last_id !== undefined) lastLogId = data.last_id;
+
+                    // Update Thresholds
+                    if (data.thresholds && data.thresholds.length > 0) {
+                        thresholdContainer.innerHTML = '';
+                        data.thresholds.forEach(t => {
+                            const span = document.createElement('span');
+                            span.style.color = '#ef4444';
+                            span.style.fontWeight = 'bold';
+                            span.style.display = 'block';
+                            span.textContent = t;
+                            thresholdContainer.appendChild(span);
+                        });
+                    }
+
+                } catch (e) {
+                    console.error('Polling error', e);
+                }
+            }
+
+            // Start polling loop
+            pollInterval = setInterval(pollStatus, 500);
+
+            // ==========================================
+            // LOCK LOGIC
+            // ==========================================
+            const btnLock = document.getElementById('btn-lock');
+            const btnUnlock = document.getElementById('btn-unlock');
+
+            btnLock.addEventListener('click', async () => {
+                const password = prompt('Nhập mật khẩu để khóa phiên làm việc này:');
+                if (!password) return;
+
+                const res = await fetch('/api/lock?session_id=' + currentSessionId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    updateLockUI(true);
+                    showToast('Đã khóa phiên làm việc thành công!');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+
+            btnUnlock.addEventListener('click', async () => {
+                const password = prompt('Nhập mật khẩu để mở khóa:');
+                if (!password) return;
+
+                const res = await fetch('/api/unlock?session_id=' + currentSessionId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    updateLockUI(false);
+                    showToast('Đã mở khóa thành công!');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            });
+
+            function updateLockUI(isLocked) {
+                if (isLocked) {
+                    document.body.classList.add('locked-mode');
+                    btnLock.classList.add('hidden');
+                    btnUnlock.classList.remove('hidden');
+                } else {
+                    document.body.classList.remove('locked-mode');
+                    btnLock.classList.remove('hidden');
+                    btnUnlock.classList.add('hidden');
+                }
+            }
+
+            // ==========================================
+            // BASIC TEST LOGIC
+            // ==========================================
+            const apiListBasic = document.getElementById('api-list-basic');
+            let apiCountBasic = 0;
+
+            function addBasicApiItem(apiName = null, initValue = "") {
+                if (!apiName) {
+                    apiName = prompt("Nhập tên gợi nhớ cho API này:", `API Cơ bản ${apiCountBasic + 1}`);
+                    if (!apiName) apiName = "Lệnh cURL";
+                }
+
+                apiCountBasic++;
+                const id = `api-basic-${apiCountBasic}`;
+                const html = `
             <div class="api-item basic-api-item" id="${id}">
                 <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${apiName}:</label>
-                <textarea placeholder="Dán lệnh cURL vào đây..."></textarea>
+                <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                <textarea placeholder="Dán lệnh cURL vào đây...">${initValue}</textarea>
                 <div class="api-config-row">
                     <div class="api-rates">
                         <label>Chu kỳ (giây):</label>
@@ -485,157 +765,379 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `;
-        apiListBasic.insertAdjacentHTML('beforeend', html);
-    });
-
-    apiListBasic.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-remove-basic')) {
-            const targetId = e.target.getAttribute('data-target');
-            document.getElementById(targetId).remove();
-        }
-    });
-
-    apiListBasic.addEventListener('dblclick', (e) => {
-        if (e.target.classList.contains('api-title')) {
-            let currentName = e.target.textContent.replace(':', '');
-            let newName = prompt("Đổi tên API:", currentName);
-            if (newName && newName.trim() !== "") {
-                e.target.textContent = newName.trim() + ':';
+                apiListBasic.insertAdjacentHTML('beforeend', html);
+                document.getElementById(id).querySelector('textarea').addEventListener('paste', (e) => handleCurlPaste(e, addBasicApiItem));
             }
-        }
-    });
 
-    let isBasicRunning = false;
-    const btnToggleBasic = document.getElementById('btn-toggle-basic');
-    const logOutputBasic = document.getElementById('log-output-basic');
+            document.getElementById('btn-add-api-basic').addEventListener('click', () => addBasicApiItem());
 
-    function addLogBasic(msg) {
-        const isError = msg.includes('❌');
-        const div = document.createElement('div');
-        div.className = 'terminal-line';
-        if (isError) div.classList.add('error');
-        div.textContent = msg;
-        logOutputBasic.appendChild(div);
-        logOutputBasic.scrollTop = logOutputBasic.scrollHeight;
-    }
+            apiListBasic.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-remove-basic')) {
+                    const targetId = e.target.getAttribute('data-target');
+                    document.getElementById(targetId).remove();
+                }
+            });
 
-    document.getElementById('btn-export-basic').addEventListener('click', () => {
-        const apiItems = document.querySelectorAll('.basic-api-item');
-        if (apiItems.length === 0) {
-            showToast('Không có dữ liệu API nào để xuất!', 'error');
-            return;
-        }
+            apiListBasic.addEventListener('dblclick', (e) => {
+                if (e.target.classList.contains('api-title')) {
+                    let currentName = e.target.textContent.replace(':', '');
+                    let newName = prompt("Đổi tên API:", currentName);
+                    if (newName && newName.trim() !== "") {
+                        e.target.textContent = newName.trim() + ':';
+                    }
+                }
+            });
 
-        let report = `BÁO CÁO KẾT QUẢ KIỂM TRA CƠ BẢN - ${new Date().toLocaleString()}\n`;
-        report += "=".repeat(60) + "\n\n";
+            let isBasicRunning = false;
+            const btnToggleBasic = document.getElementById('btn-toggle-basic');
+            const logOutputBasic = document.getElementById('log-output-basic');
 
-        let idx = 1;
-        apiItems.forEach(item => {
-            const curl = item.querySelector('textarea').value.trim();
-            if (!curl) return;
+            function addLogBasic(msg) {
+                const isError = msg.includes('❌');
+                const div = document.createElement('div');
+                div.className = 'terminal-line';
+                if (isError) div.classList.add('error');
+                div.textContent = msg;
+                logOutputBasic.appendChild(div);
+                logOutputBasic.scrollTop = logOutputBasic.scrollHeight;
+            }
 
-            const urlMatch = curl.match(/https?:\/\/[^\s'"]+/);
-            const url = urlMatch ? urlMatch[0] : 'N/A';
-            const methodMatch = curl.match(/-X\s+([A-Z]+)/);
-            const method = methodMatch ? methodMatch[1] : 'GET';
-            const interval = parseInt(item.querySelector('.api-interval').value);
-            const apiName = item.querySelector('.api-title').textContent.replace(':', '');
+            document.getElementById('btn-export-basic').addEventListener('click', () => {
+                const apiItems = document.querySelectorAll('.basic-api-item');
+                if (apiItems.length === 0) {
+                    showToast('Không có dữ liệu API nào để xuất!', 'error');
+                    return;
+                }
 
-            report += `--- ${apiName} ---\n`;
-            report += `URL: ${url}\n`;
-            report += `Method: ${method}\n`;
-            report += `Chu kỳ: ${interval} giây / 1 request\n`;
-            report += "-".repeat(40) + "\n\n";
-            idx++;
+                let report = `BÁO CÁO KẾT QUẢ KIỂM TRA CƠ BẢN - ${new Date().toLocaleString()}\n`;
+                report += "=".repeat(60) + "\n\n";
+
+                let idx = 1;
+                apiItems.forEach(item => {
+                    const curl = item.querySelector('textarea').value.trim();
+                    if (!curl) return;
+
+                    const urlMatch = curl.match(/https?:\/\/[^\s'"]+/);
+                    const url = urlMatch ? urlMatch[0] : 'N/A';
+                    const methodMatch = curl.match(/-X\s+([A-Z]+)/);
+                    const method = methodMatch ? methodMatch[1] : 'GET';
+                    const interval = parseInt(item.querySelector('.api-interval').value);
+                    const apiName = item.querySelector('.api-title').textContent.replace(':', '').trim();
+
+                    const stats = currentBasicApiStats[apiName] || {success: 0, fail: 0, fail_details: {}};
+
+                    report += `--- ${apiName} ---\n`;
+                    report += `URL: ${url}\n`;
+                    report += `Method: ${method}\n`;
+                    report += `Chu kỳ: ${interval} giây / 1 request\n`;
+                    report += `Thành công: ${stats.success}\n`;
+                    report += `Thất bại: ${stats.fail}\n`;
+                    if (stats.fail > 0 && stats.fail_details) {
+                        for (const [code, count] of Object.entries(stats.fail_details)) {
+                            report += `    + ${code}: ${count} lần\n`;
+                        }
+                    }
+                    report += "-".repeat(40) + "\n\n";
+                    idx++;
+                });
+
+                const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `basic_test_report_${new Date().getTime()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('Đã tải báo cáo xuống thành công!');
+            });
+
+            btnToggleBasic.addEventListener('click', async () => {
+                if (isBasicRunning) {
+                    const res = await fetch('/api/stop_basic?session_id=' + currentSessionId, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        window.location.href = '/api/download_basic_log?session_id=' + currentSessionId;
+                        showToast('Đã dừng và tự động tải file log.');
+                    }
+                } else {
+                    const apiItems = document.querySelectorAll('.basic-api-item');
+                    if (apiItems.length === 0) {
+                        showToast('Vui lòng thêm ít nhất 1 API', 'error');
+                        return;
+                    }
+
+                    const apis = [];
+                    apiItems.forEach(item => {
+                        const name = item.querySelector('.api-title').textContent.replace(':', '').trim();
+                        const curl = item.querySelector('textarea').value.trim();
+                        const interval = parseInt(item.querySelector('.api-interval').value);
+                        if (curl) {
+                            apis.push({ name, curl, interval });
+                        }
+                    });
+
+                    if (apis.length === 0) {
+                        showToast('Vui lòng nhập nội dung cURL', 'error');
+                        return;
+                    }
+
+                    // Đã tách việc lưu API ra nút Lưu riêng
+
+                    logOutputBasic.innerHTML = '';
+
+                    const loginUrl = document.getElementById('server-url').value;
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+
+                    const res = await fetch('/api/start_basic?session_id=' + currentSessionId, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: jwtToken, login_url: loginUrl, username: username, password: password, apis: apis })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'error') {
+                        showToast(data.message, 'error');
+                        return;
+                    }
+                }
+            });
+
+            let lastLogIdBasic = -1;
+            let currentBasicApiStats = {};
+            async function pollBasicStatus() {
+                if (!currentSessionId) return;
+
+                try {
+                    const res = await fetch('/api/status_basic?session_id=' + currentSessionId + '&last_id=' + lastLogIdBasic);
+                    const data = await res.json();
+
+                    updateLockUI(data.is_locked);
+
+                    if (data.is_running !== isBasicRunning) {
+                        isBasicRunning = data.is_running;
+                        if (isBasicRunning) {
+                            btnToggleBasic.textContent = 'DỪNG LẠI 🛑';
+                            btnToggleBasic.style.background = '#f59e0b';
+                        } else {
+                            btnToggleBasic.textContent = 'BẮT ĐẦU';
+                            btnToggleBasic.style.background = '#10b981'; // green
+                        }
+                    }
+
+                    document.getElementById('stat-success-basic').textContent = data.stats.success;
+                    document.getElementById('stat-fail-basic').textContent = data.stats.fail;
+
+                    if (data.api_stats) {
+                        currentBasicApiStats = data.api_stats;
+                    }
+
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(log => addLogBasic(log.msg));
+                    }
+                    if (data.last_id !== undefined) lastLogIdBasic = data.last_id;
+
+                } catch (e) {
+                    console.error('Basic Polling error', e);
+                }
+            }
+
+            setInterval(pollBasicStatus, 500);
+
+            // ==========================================
+            // DATABASE SAVE/LOAD LOGIC
+            // ==========================================
+            let isStateLoaded = false;
+
+            function saveStateToLocal(format = false) {
+                if (!isStateLoaded) return;
+
+                const state = {
+                    url: document.getElementById('server-url').value,
+                    username: document.getElementById('username').value,
+                    jwtToken: jwtToken,
+                    apis: [],
+                    basicApis: []
+                };
+
+                document.querySelectorAll('.api-item:not(.basic-api-item)').forEach(item => {
+                    state.apis.push({
+                        name: item.querySelector('.api-title').textContent.replace(':', ''),
+                        curl: item.querySelector('textarea').value,
+                        rate: item.querySelector('.api-rate').value,
+                        step: item.querySelector('.api-step').value
+                    });
+                });
+
+                document.querySelectorAll('.basic-api-item').forEach(item => {
+                    state.basicApis.push({
+                        name: item.querySelector('.api-title').textContent.replace(':', ''),
+                        curl: item.querySelector('textarea').value,
+                        interval: item.querySelector('.api-interval').value
+                    });
+                });
+
+                fetch('/api/database?session_id=' + currentSessionId + '&format=' + format, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(state)
+                }).catch(e => console.error("Lỗi lưu DB", e));
+            }
+
+            async function loadStateFromLocal() {
+                try {
+                    const res = await fetch('/api/database?session_id=' + currentSessionId);
+                    const state = await res.json();
+
+                    if (Object.keys(state).length === 0) return;
+
+                    if (state.url) document.getElementById('server-url').value = state.url;
+                    if (state.username) document.getElementById('username').value = state.username;
+                    if (state.jwtToken) jwtToken = state.jwtToken;
+
+                    if (state.apis && state.apis.length > 0) {
+                        state.apis.forEach(api => {
+                            apiCount++;
+                            const id = `api-${apiCount}`;
+                            const html = `
+                        <div class="api-item" id="${id}">
+                            <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${api.name}:</label>
+                            <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                            <textarea placeholder="Dán lệnh cURL vào đây...">${api.curl}</textarea>
+                            <div class="api-config-row">
+                                <div class="api-rates">
+                                    <label>Start (req/s):</label>
+                                    <input type="number" class="api-rate" value="${api.rate}">
+                                    <label>Step/5s:</label>
+                                    <input type="number" class="api-step" value="${api.step}">
+                                </div>
+                                <button class="btn btn-secondary btn-remove" data-target="${id}">Xóa</button>
+                            </div>
+                        </div>
+                    `;
+                            apiList.insertAdjacentHTML('beforeend', html);
+                        });
+                    }
+
+                    if (state.basicApis && state.basicApis.length > 0) {
+                        state.basicApis.forEach(api => {
+                            apiCountBasic++;
+                            const id = `api-basic-${apiCountBasic}`;
+                            const html = `
+                        <div class="api-item basic-api-item" id="${id}">
+                            <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${api.name}:</label>
+                            <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                            <textarea placeholder="Dán lệnh cURL vào đây...">${api.curl}</textarea>
+                            <div class="api-config-row">
+                                <div class="api-rates">
+                                    <label>Chu kỳ (giây):</label>
+                                    <input type="number" class="api-interval" value="${api.interval}">
+                                </div>
+                                <button class="btn btn-secondary btn-remove-basic" data-target="${id}">Xóa</button>
+                            </div>
+                        </div>
+                    `;
+                            apiListBasic.insertAdjacentHTML('beforeend', html);
+                        });
+                    }
+                } catch (e) {
+                    console.error("Lỗi tải DB", e);
+                } finally {
+                    isStateLoaded = true;
+                }
+            }
+
+            document.getElementById('btn-save-view').addEventListener('click', () => {
+                saveStateToLocal(true);
+                showToast('Đã lưu giao diện với định dạng dễ nhìn!');
+            });
+            document.getElementById('btn-save-normal').addEventListener('click', () => {
+                saveStateToLocal(false);
+                showToast('Đã lưu giao diện tối ưu hiệu năng!');
+            });
+
+            document.getElementById('btn-save-api-view').addEventListener('click', () => {
+                saveStateToLocal(true);
+                showToast('Đã lưu cấu hình API với định dạng dễ nhìn!');
+            });
+            document.getElementById('btn-save-api-normal').addEventListener('click', () => {
+                saveStateToLocal(false);
+                showToast('Đã lưu cấu hình API tối ưu hiệu năng!');
+            });
+
+            document.getElementById('btn-save-api-basic-view').addEventListener('click', () => {
+                saveStateToLocal(true);
+                showToast('Đã lưu cấu hình kiểm tra cơ bản với định dạng dễ nhìn!');
+            });
+            document.getElementById('btn-save-api-basic-normal').addEventListener('click', () => {
+                saveStateToLocal(false);
+                showToast('Đã lưu cấu hình kiểm tra cơ bản tối ưu hiệu năng!');
+            });
+
+
+            loadStateFromLocal();
+
         });
 
-        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `basic_test_report_${new Date().getTime()}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showToast('Đã tải báo cáo xuống thành công!');
-    });
+    </script>
 
-    btnToggleBasic.addEventListener('click', async () => {
-        if (isBasicRunning) {
-            await fetch('/api/stop_basic', { method: 'POST' });
-        } else {
-            const apiItems = document.querySelectorAll('.basic-api-item');
-            if (apiItems.length === 0) {
-                showToast('Vui lòng thêm ít nhất 1 API', 'error');
-                return;
-            }
+    <div id="apiInfoModal" class="modal-info">
+        <div class="modal-info-content">
+            <span class="modal-info-close" id="closeApiInfoModal">&times;</span>
+            <h3 id="apiInfoTitle" style="color: var(--primary); margin-top: 0;">Thông tin API</h3>
+            <pre id="apiInfoContent" class="modal-info-pre"></pre>
+            <button class="btn btn-primary" id="btn-copy-api-info" style="margin-top: 15px; width: 100%;">📋 Copy cURL</button>
+        </div>
+    </div>
 
-            const apis = [];
-            apiItems.forEach(item => {
-                const curl = item.querySelector('textarea').value.trim();
-                const interval = parseInt(item.querySelector('.api-interval').value);
-                if (curl) {
-                    apis.push({ curl, interval });
-                }
-            });
+<script>
 
-            if (apis.length === 0) {
-                showToast('Vui lòng nhập nội dung cURL', 'error');
-                return;
-            }
+        // JS cho API Info Modal
+        const apiInfoModal = document.getElementById('apiInfoModal');
+        const closeApiInfoModal = document.getElementById('closeApiInfoModal');
+        const btnCopyApiInfo = document.getElementById('btn-copy-api-info');
+        let currentCurlToCopy = '';
 
-            logOutputBasic.innerHTML = '';
-
-            const loginUrl = document.getElementById('server-url').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            const res = await fetch('/api/start_basic', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: jwtToken, login_url: loginUrl, username: username, password: password, apis: apis })
-            });
-            const data = await res.json();
-            if (data.status === 'error') {
-                showToast(data.message, 'error');
-                return;
+        closeApiInfoModal.onclick = function() {
+            apiInfoModal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == apiInfoModal) {
+                apiInfoModal.style.display = "none";
             }
         }
-    });
-
-    async function pollBasicStatus() {
-        try {
-            const res = await fetch('/api/status_basic');
-            const data = await res.json();
-
-            updateLockUI(data.is_locked);
-
-            if (data.is_running !== isBasicRunning) {
-                isBasicRunning = data.is_running;
-                if (isBasicRunning) {
-                    btnToggleBasic.textContent = 'DỪNG LẠI 🛑';
-                    btnToggleBasic.style.background = '#f59e0b';
-                } else {
-                    btnToggleBasic.textContent = 'BẮT ĐẦU';
-                    btnToggleBasic.style.background = '#10b981'; // green
-                }
-            }
-
-            document.getElementById('stat-success-basic').textContent = data.stats.success;
-            document.getElementById('stat-fail-basic').textContent = data.stats.fail;
-
-            if (data.logs && data.logs.length > 0) {
-                data.logs.forEach(log => addLogBasic(log));
-            }
-
-        } catch (e) {
-            console.error('Basic Polling error', e);
+        btnCopyApiInfo.onclick = function() {
+            navigator.clipboard.writeText(currentCurlToCopy).then(() => {
+                showToast("Đã copy cURL vào clipboard!");
+            });
         }
-    }
 
-    setInterval(pollBasicStatus, 500);
+        function handleViewApiClick(e) {
+            if (e.target.classList.contains('btn-view-api')) {
+                const apiItem = e.target.closest('.api-item');
+                const title = apiItem.querySelector('.api-title').textContent.replace(':', '').trim();
+                let curlText = apiItem.querySelector('textarea').value.trim();
+                
+                // Format the curl a bit nicely (split -H and other flags to new lines)
+                let formattedCurl = curlText;
+                try {
+                    // Cố gắng format cho dễ nhìn
+                    formattedCurl = curlText.replace(/ -H /g, ' \\n  -H ')
+                                           .replace(/ -d /g, ' \\n  -d ')
+                                           .replace(/ --data /g, ' \\n  --data ')
+                                           .replace(/ -X /g, ' \\n  -X ');
+                } catch(err) {}
 
-});
+                document.getElementById('apiInfoTitle').textContent = "Chi tiết: " + title;
+                document.getElementById('apiInfoContent').innerHTML = formattedCurl.replace(/\\n/g, '<br>');
+                currentCurlToCopy = curlText;
+                apiInfoModal.style.display = "block";
+            }
+        }
+
+        document.getElementById('api-list').addEventListener('click', handleViewApiClick);
+        document.getElementById('api-list-basic').addEventListener('click', handleViewApiClick);
 
 </script>
 </body>
+
 </html>

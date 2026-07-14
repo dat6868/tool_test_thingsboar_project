@@ -204,6 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            saveStateToLocal(); // LƯU VÀO DATABASE KHI BẤM BẮT ĐẦU
+
             logOutput.innerHTML = '';
             thresholdContainer.innerHTML = '';
 
@@ -229,9 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggle.addEventListener('click', toggleEngine);
 
     // Status Polling
+    let lastLogId = -1;
     async function pollStatus() {
         try {
-            const res = await fetch('/api/status');
+            const res = await fetch('/api/status?last_id=' + lastLogId);
             const data = await res.json();
 
             updateLockUI(data.is_locked);
@@ -254,8 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Add logs
             if (data.logs && data.logs.length > 0) {
-                data.logs.forEach(log => addLog(log));
+                data.logs.forEach(log => addLog(log.msg));
             }
+            if (data.last_id !== undefined) lastLogId = data.last_id;
 
             // Update Thresholds
             if (data.thresholds && data.thresholds.length > 0) {
@@ -453,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            saveStateToLocal(); // LƯU VÀO DATABASE KHI BẤM BẮT ĐẦU
+
             logOutputBasic.innerHTML = '';
 
             const loginUrl = document.getElementById('server-url').value;
@@ -472,9 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    let lastLogIdBasic = -1;
     async function pollBasicStatus() {
         try {
-            const res = await fetch('/api/status_basic');
+            const res = await fetch('/api/status_basic?last_id=' + lastLogIdBasic);
             const data = await res.json();
 
             updateLockUI(data.is_locked);
@@ -494,8 +501,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('stat-fail-basic').textContent = data.stats.fail;
 
             if (data.logs && data.logs.length > 0) {
-                data.logs.forEach(log => addLogBasic(log));
+                data.logs.forEach(log => addLogBasic(log.msg));
             }
+            if (data.last_id !== undefined) lastLogIdBasic = data.last_id;
 
         } catch (e) {
             console.error('Basic Polling error', e);
@@ -507,7 +515,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // DATABASE SAVE/LOAD LOGIC
     // ==========================================
+    let isStateLoaded = false;
+
     function saveStateToLocal() {
+        if (!isStateLoaded) return;
+
         const state = {
             url: document.getElementById('server-url').value,
             username: document.getElementById('username').value,
@@ -596,10 +608,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             console.error("Lỗi tải DB", e);
+        } finally {
+            isStateLoaded = true;
         }
     }
 
     loadStateFromLocal();
-    setInterval(saveStateToLocal, 2000);
 
 });

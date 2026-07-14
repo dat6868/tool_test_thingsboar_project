@@ -1,13 +1,56 @@
-HƯỚNG DẪN TRIỂN KHAI NHANH 2 CÔNG CỤ (BOMB DROPPER WEB & DEVICE SIMULATOR) TRÊN SERVER
+HƯỚNG DẪN TRIỂN KHAI 2 CÔNG CỤ (BOMB DROPPER WEB & DEVICE SIMULATOR) TỪ A ĐẾN Z
 
-Bước 1: Đi tới thư mục gốc (nơi chứa cả 2 thư mục tool)
+================================================================================
+PHẦN 1: HƯỚNG DẪN CHẠY LOCAL TRÊN WINDOWS 11
+================================================================================
+
+* Bước 1: Đi tới thư mục gốc
+  - Mở Terminal (PowerShell hoặc Command Prompt).
+  - Di chuyển đến thư mục dự án bằng lệnh:
+    + cd "C:\đường\dẫn\tới\tool_test_thingsboar_project"
+
+* Bước 2: Tạo và kích hoạt môi trường ảo (venv) dùng chung
+  - Chạy lệnh tạo môi trường ảo:
+    + python -m venv venv
+  - Chạy lệnh kích hoạt môi trường ảo:
+    + .\venv\Scripts\activate
+
+* Bước 3: Cài đặt thư viện cho cả 2 tool
+  - Cài đặt thư viện cho Tool Device:
+    + pip install -r ToolsDevice\requirements.txt
+  - Cài đặt thư viện cho Tool Web:
+    + pip install -r bomb_dropper_web\requirements.txt
+
+* Bước 4: Khởi động các Tool (Nên mở 2 tab Terminal riêng biệt)
+  - Tab 1: Chạy Tool Device (Locust)
+    + Đảm bảo venv đã được kích hoạt (.\venv\Scripts\activate).
+    + Đi vào thư mục: cd ToolsDevice
+    + Khởi động: locust -f Device1.py --web-host 0.0.0.0 --web-port 6366
+  
+  - Tab 2: Chạy Tool Web (Bomb Dropper)
+    + Đảm bảo venv đã được kích hoạt (.\venv\Scripts\activate).
+    + Đi vào thư mục: cd bomb_dropper_web
+    + Khởi động: uvicorn main:app --host 0.0.0.0 --port 6368 --reload
+
+* Bước 5: Truy cập trên trình duyệt
+  - Xem và điều khiển Tool Device (Locust):
+    + http://localhost:6366
+  - Xem và điều khiển Tool Web (Bomb Dropper):
+    + http://localhost:6368
+
+
+================================================================================
+PHẦN 2: HƯỚNG DẪN TRIỂN KHAI TRÊN SERVER UBUNTU (CHẠY NGẦM)
+================================================================================
+
+Bước 1: Đi tới thư mục gốc
 cd ~/tool_test_thingsboar_project
 
-Bước 2: Tạo và kích hoạt môi trường ảo (venv) dùng chung
+Bước 2: Tạo và kích hoạt môi trường ảo (venv)
 python3 -m venv venv
 source venv/bin/activate
 
-Bước 3: Cài đặt thư viện cho cả 2 tool
+Bước 3: Cài đặt thư viện
 pip install -r ToolsDevice/requirements.txt
 pip install -r bomb_dropper_web/requirements.txt
 
@@ -22,8 +65,33 @@ nohup ../venv/bin/uvicorn main:app --host 0.0.0.0 --port 6368 --no-access-log > 
 cd ..
 
 ---
-LƯU Ý QUAN TRỌNG: 
-1. Bạn phải mở tường lửa (Firewall) cho cổng 6366 và 6368 (sudo ufw allow 6366/tcp && sudo ufw allow 6368/tcp)
-2. Sau khi chạy xong, dùng trình duyệt truy cập:
-   - Tool Device (Locust): http://<IP_MÁY_ẢO>:6366
-   - Tool Web (Bomb Dropper): http://<IP_MÁY_ẢO>:6368
+LƯU Ý QUAN TRỌNG TRÊN UBUNTU:
+1. Bạn phải mở tường lửa (Firewall) cho cổng 6366 và 6368:
+   sudo ufw allow 6366/tcp && sudo ufw allow 6368/tcp
+2. Truy cập: 
+   - Tool Device: http://<IP_MÁY_ẢO>:6366
+   - Tool Web: http://<IP_MÁY_ẢO>:6368
+
+
+================================================================================
+PHẦN 3: CÁC LỆNH KIỂM TRA & THEO DÕI TRÊN SERVER UBUNTU
+================================================================================
+
+Lệnh check xem các tool còn sống (đang chạy) không:
+ps aux | grep -E "uvicorn|locust" | grep -v grep
+
+Lệnh check log Tool Device (Locust):
+tail -f -n 100 ~/tool_test_thingsboar_project/ToolsDevice/device_sim.log
+
+Lệnh check log Tool Web (Uvicorn):
+tail -f -n 100 ~/tool_test_thingsboar_project/bomb_dropper_web/server.log
+
+Lệnh kiểm tra cổng (xem tool có đang lắng nghe kết nối không):
+sudo ss -tulnp | grep -E "6366|6368"
+
+Lệnh dừng (kill) hoàn toàn các tool đang chạy ngầm:
+pkill -f locust
+pkill -f uvicorn
+
+Lệnh theo dõi tổng quan hệ thống (CPU, RAM thời gian thực):
+htop

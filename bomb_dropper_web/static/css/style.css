@@ -41,14 +41,14 @@ body {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
     box-shadow: 4px 0 24px rgba(0,0,0,0.5);
     z-index: 10;
 }
 
 .logo {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     position: relative;
 }
 
@@ -108,7 +108,7 @@ body {
 .content {
     flex: 1;
     overflow-y: auto;
-    padding: 2rem;
+    padding: 1rem;
 }
 
 .tab-content {
@@ -118,14 +118,14 @@ body {
 .tab-content.active {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     height: 100%;
 }
 
 .two-columns-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: stretch;
     flex: 1;
     min-height: 0; /* Important for flex child with overflow */
@@ -134,6 +134,7 @@ body {
 .two-columns-layout > .glass-card {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .hidden {
@@ -155,7 +156,7 @@ body {
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
@@ -163,7 +164,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .card-title {
@@ -214,7 +215,7 @@ input:focus, textarea:focus {
 
 /* Buttons */
 .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
     border: none;
     font-weight: 600;
@@ -247,15 +248,15 @@ input:focus, textarea:focus {
 .btn-danger:hover { background: var(--danger-hover); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
 
 .btn-large {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
 }
 
 /* API Config List */
 .api-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     flex: 1;
     overflow-y: auto;
 }
@@ -264,17 +265,18 @@ input:focus, textarea:focus {
     background: rgba(0,0,0,0.2);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 1rem;
+    padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     animation: slideIn 0.3s ease;
+    position: relative;
 }
 
 .api-item textarea {
     width: 100%;
     resize: vertical;
-    height: 80px;
+    height: 60px;
 }
 
 .api-config-row {
@@ -297,13 +299,13 @@ input:focus, textarea:focus {
 .monitor-card {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .monitor-controls {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .stats-box {
@@ -354,9 +356,16 @@ input:focus, textarea:focus {
 
 .terminal-line {
     margin-bottom: 0.2rem;
+    word-break: break-all;
+    white-space: pre-wrap;
 }
 .terminal-line.error { color: #ff5f56; }
 .terminal-line.warning { color: #ffbd2e; }
+
+/* Filter Logistics */
+.filter-error .terminal-line:not(.error) { display: none; }
+.filter-success .terminal-line.error { display: none; }
+.filter-success .terminal-line.warning { display: none; }
 
 /* Toast */
 .toast {
@@ -369,7 +378,7 @@ input:focus, textarea:focus {
     border-radius: 8px;
     font-weight: 500;
     box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    z-index: 1000;
+    z-index: 999999;
     transition: opacity 0.3s, transform 0.3s;
 }
 
@@ -391,7 +400,74 @@ body.locked-mode {
 
 body.locked-mode input,
 body.locked-mode textarea,
-body.locked-mode button:not(#btn-unlock) {
+body.locked-mode button:not(#btn-unlock):not(#btn-exit-session) {
     pointer-events: none !important;
     opacity: 0.5 !important;
+}
+
+/* Sessions */
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 0.5rem;
+    border-radius: 4px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.session-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.session-item.active {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--primary);
+}
+.btn-delete-session {
+    background: transparent;
+    border: none;
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0.2rem;
+}
+.btn-delete-session:hover {
+    color: var(--danger-hover);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.session-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.95);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.session-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    width: 600px;
+    max-width: 90vw;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
