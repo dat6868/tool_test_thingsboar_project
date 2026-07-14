@@ -31,7 +31,9 @@ TELEMETRY_DATA = {
     "dim": 0,
     "vercode": "0.0.13"
 }
-RESPONSE_RPC = True  # Phản hồi các bản tin RPC hay không
+RESPONSE_RPC = "true"  # Phản hồi các bản tin RPC hay không ("true", "false", "range")
+RESPONSE_RPC_SKIP_START = 0
+RESPONSE_RPC_SKIP_END = 0
 
 # Đọc cấu hình từ file JSON
 config_path = "device_config.json"
@@ -59,7 +61,9 @@ if config_path:
             TELEMETRY_TOPIC = cfg.get("TELEMETRY_TOPIC", TELEMETRY_TOPIC)
             RPC_REQUEST_TOPIC = cfg.get("RPC_REQUEST_TOPIC", RPC_REQUEST_TOPIC)
             TELEMETRY_DATA = cfg.get("TELEMETRY_DATA", TELEMETRY_DATA)
-            RESPONSE_RPC = bool(cfg.get("RESPONSE_RPC", RESPONSE_RPC))
+            RESPONSE_RPC = str(cfg.get("RESPONSE_RPC", RESPONSE_RPC))
+            RESPONSE_RPC_SKIP_START = int(cfg.get("RESPONSE_RPC_SKIP_START", RESPONSE_RPC_SKIP_START))
+            RESPONSE_RPC_SKIP_END = int(cfg.get("RESPONSE_RPC_SKIP_END", RESPONSE_RPC_SKIP_END))
     except Exception as e:
         print(f"Lỗi khi đọc file cấu hình JSON: {e}. Sử dụng cấu hình mặc định.")
 # =========================================================
@@ -107,7 +111,10 @@ class DeviceClient:
     def __init__(self, index: int):
         self.index = index
         # Thông tin kết nối được sinh tự động theo biến đếm (index)
-        self.device_code = f"{DEVICE_CODE_PREFIX}{index:08d}"
+        # Độ dài phần số tự động phình ra theo giá trị lớn nhất (tối thiểu là 3 chữ số)
+        max_val = START_INDEX + NUM_DEV
+        padding_len = max(3, len(str(max_val)))
+        self.device_code = f"{DEVICE_CODE_PREFIX}{index:0{padding_len}d}"
         self.device_id = f"{DEVICE_ID_PREFIX}{self.device_code}"
         self.mac_address = self.device_code
         self.msg_id = 1
@@ -198,11 +205,18 @@ class DeviceClient:
                         "code": 0
                     }
                 }
-                if RESPONSE_RPC:
+                should_respond = True
+                if RESPONSE_RPC == "false":
+                    should_respond = False
+                elif RESPONSE_RPC == "range":
+                    if RESPONSE_RPC_SKIP_START <= self.index <= RESPONSE_RPC_SKIP_END:
+                        should_respond = False
+
+                if should_respond:
                     self.publish("v1/devices/me/rpc/response/{}".format(identify), json.dumps(payload_response))
                     print(f"Gửi phản hồi RPC đến topic v1/devices/me/rpc/response/{identify}: {payload_response}")
                 else:
-                    print(f"Nhận được RPC '{method}' nhưng KHÔNG gửi phản hồi (RESPONSE_RPC = False)")
+                    print(f"Nhận được RPC '{method}' trên {self.device_id} nhưng KHÔNG gửi phản hồi (RESPONSE_RPC = {RESPONSE_RPC})")
                 # time.sleep(1) # Đã tạm ẩn đi theo yêu cầu test để không block luồng mạng
             if isinstance(payload, dict):
                 req_method = payload.get("method")

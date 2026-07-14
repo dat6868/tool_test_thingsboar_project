@@ -37,7 +37,9 @@ DEFAULT_CONFIG = {
     "LOG_INTERVAL": 60,
     "TELEMETRY_TOPIC": "v1/devices/me/telemetry",
     "RPC_REQUEST_TOPIC": "v1/devices/me/rpc/request/{}",
-    "RESPONSE_RPC": True,
+    "RESPONSE_RPC": "true",
+    "RESPONSE_RPC_SKIP_START": 0,
+    "RESPONSE_RPC_SKIP_END": 0,
     "TELEMETRY_DATA": {
         "mode": 1,
         "relay1": False,
@@ -59,7 +61,9 @@ class ConfigModel(BaseModel):
     LOG_INTERVAL: int
     TELEMETRY_TOPIC: str
     RPC_REQUEST_TOPIC: str
-    RESPONSE_RPC: bool
+    RESPONSE_RPC: str
+    RESPONSE_RPC_SKIP_START: int
+    RESPONSE_RPC_SKIP_END: int
     TELEMETRY_DATA: dict
 
 def get_locust_pids():

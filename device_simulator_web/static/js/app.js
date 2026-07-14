@@ -48,6 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    // Bind RESPONSE_RPC change event to show/hide range row
+    const rpcSelect = document.getElementById('RESPONSE_RPC');
+    const rpcRangeRow = document.getElementById('rpc-skip-range-row');
+    if (rpcSelect && rpcRangeRow) {
+        rpcSelect.addEventListener('change', () => {
+            rpcRangeRow.style.display = rpcSelect.value === 'range' ? 'grid' : 'none';
+        });
+    }
+
     // 3. Load Config from Backend
     async function loadConfig() {
         try {
@@ -64,6 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         el.value = cfg[key].toString();
                     }
                 }
+            }
+
+            // Sync range row visibility
+            if (rpcSelect && rpcRangeRow) {
+                rpcRangeRow.style.display = rpcSelect.value === 'range' ? 'grid' : 'none';
             }
         } catch (e) {
             showToast('Lỗi khi tải cấu hình: ' + e.message, 'error');
@@ -88,13 +102,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast('Dữ liệu Telemetry không đúng định dạng JSON hợp lệ!', 'error');
                     hasError = true;
                 }
-            } else if (input.id === 'RESPONSE_RPC') {
-                data[input.id] = (val === 'true');
             } else {
                 // Ép kiểu số nếu input có kiểu number
                 data[input.id] = input.type === 'number' ? parseInt(val) : val;
             }
         });
+
+        // Validation cho dải chỉ số RPC không phản hồi
+        if (!hasError && rpcSelect && rpcSelect.value === 'range') {
+            const startIndex = parseInt(document.getElementById('START_INDEX').value) || 0;
+            const numDev = parseInt(document.getElementById('NUM_DEV').value) || 0;
+            const skipStart = parseInt(document.getElementById('RESPONSE_RPC_SKIP_START').value) || 0;
+            const skipEnd = parseInt(document.getElementById('RESPONSE_RPC_SKIP_END').value) || 0;
+            
+            const minAllowed = startIndex + 1;
+            const maxAllowed = startIndex + numDev;
+
+            if (skipStart < minAllowed || skipStart > maxAllowed) {
+                showToast(`Chỉ số bắt đầu bỏ qua (${skipStart}) phải nằm trong khoảng từ ${minAllowed} đến ${maxAllowed}!`, 'error');
+                hasError = true;
+            }
+            if (!hasError && (skipEnd < skipStart || skipEnd > maxAllowed)) {
+                showToast(`Chỉ số kết thúc bỏ qua (${skipEnd}) phải từ ${skipStart} đến ${maxAllowed}!`, 'error');
+                hasError = true;
+            }
+        }
 
         if (hasError) return;
 
