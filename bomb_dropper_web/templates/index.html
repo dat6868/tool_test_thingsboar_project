@@ -5,8 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Final Door Web API</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=1.1">
+    <link rel="stylesheet" href="/static/css/style.css?v=1.4">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Modal Info */
+        .modal-info {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+        }
+        .modal-info-content {
+            background-color: #1e293b; margin: 5% auto; padding: 20px;
+            border: 1px solid var(--border-color); border-radius: 10px; width: 80%; max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); position: relative;
+        }
+        .modal-info-close {
+            color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1;
+        }
+        .modal-info-close:hover { color: #fff; }
+        .modal-info-pre {
+            background: #0f172a; padding: 15px; border-radius: 8px; overflow-x: auto;
+            white-space: pre-wrap; word-break: break-all; color: #10b981; font-family: monospace;
+            margin-top: 15px; border: 1px solid var(--border-color);
+        }
+    </style>
 </head>
 
 <body>
@@ -296,8 +317,8 @@
                 const curls = text.split(/curl\s+/i).filter(c => c.trim().length > 0);
                 if (curls.length > 1) {
                     e.preventDefault();
-                    curls.forEach((c, idx) => {
-                        addFunc(`API Tự động ${idx + 1}`, "curl " + c.trim());
+                    curls.reverse().forEach((c, idx) => {
+                        addFunc(`API Tự động ${curls.length - idx}`, "curl " + c.trim());
                     });
                 }
             }
@@ -311,9 +332,9 @@
                 apiCount++;
                 const id = `api-${apiCount}`;
                 const html = `
-            <div class="api-item" id="${id}">
+            <div class="api-item" id="${id}" style="position: relative;">
                 <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${apiName}:</label>
-                <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer; z-index: 10;">🔍 Chi tiết</button>
                 <textarea placeholder="Dán lệnh cURL vào đây...">${initValue}</textarea>
                 <div class="api-config-row">
                     <div class="api-rates">
@@ -326,7 +347,7 @@
                 </div>
             </div>
         `;
-                apiList.insertAdjacentHTML('beforeend', html);
+                apiList.insertAdjacentHTML('afterbegin', html);
                 document.getElementById(id).querySelector('textarea').addEventListener('paste', (e) => handleCurlPaste(e, addApiItem));
             }
 
@@ -590,16 +611,65 @@
                 }
             });
             
-            document.getElementById('btn-exit-session').addEventListener('click', async () => {
-                // Tự động lưu cấu hình và API (save thường - tối ưu) trước khi thoát
-                saveStateToLocal(false);
+            function exitSessionGracefully() {
+                if (!currentSessionId) return;
 
-                // Tự động khóa khi thoát phiên (gọi api/lock ko cần pass vì pass đã fix)
-                await fetch('/api/lock?session_id=' + currentSessionId, {
+                const state = {
+                    url: document.getElementById('server-url').value,
+                    username: document.getElementById('username').value,
+                    jwtToken: jwtToken,
+                    apis: [],
+                    basicApis: []
+                };
+
+                document.querySelectorAll('.api-item:not(.basic-api-item)').forEach(item => {
+                    state.apis.push({
+                        name: item.querySelector('.api-title').textContent.replace(':', ''),
+                        curl: item.querySelector('textarea').value,
+                        rate: item.querySelector('.api-rate').value,
+                        step: item.querySelector('.api-step').value
+                    });
+                });
+
+                document.querySelectorAll('.basic-api-item').forEach(item => {
+                    state.basicApis.push({
+                        name: item.querySelector('.api-title').textContent.replace(':', ''),
+                        curl: item.querySelector('textarea').value,
+                        interval: item.querySelector('.api-interval').value
+                    });
+                });
+
+                state.apis.reverse();
+                state.basicApis.reverse();
+
+                // Sử dụng keepalive: true để đảm bảo request gửi thành công khi reload/đóng trang
+                fetch('/api/database?session_id=' + currentSessionId + '&format=false', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(state),
+                    keepalive: true
+                });
+
+                fetch('/api/lock?session_id=' + currentSessionId, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({password: ""}) // password optional
+                    body: JSON.stringify({password: ""}),
+                    keepalive: true
                 });
+            }
+
+            let isDownloadingFile = false;
+
+            window.addEventListener('beforeunload', () => {
+                if (isDownloadingFile) {
+                    isDownloadingFile = false;
+                    return;
+                }
+                exitSessionGracefully();
+            });
+
+            document.getElementById('btn-exit-session').addEventListener('click', () => {
+                exitSessionGracefully();
                 currentSessionId = '';
                 updateLockUI(false);
                 sessionOverlay.style.display = 'flex';
@@ -752,9 +822,9 @@
                 apiCountBasic++;
                 const id = `api-basic-${apiCountBasic}`;
                 const html = `
-            <div class="api-item basic-api-item" id="${id}">
+            <div class="api-item basic-api-item" id="${id}" style="position: relative;">
                 <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${apiName}:</label>
-                <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer; z-index: 10;">🔍 Chi tiết</button>
                 <textarea placeholder="Dán lệnh cURL vào đây...">${initValue}</textarea>
                 <div class="api-config-row">
                     <div class="api-rates">
@@ -765,7 +835,7 @@
                 </div>
             </div>
         `;
-                apiListBasic.insertAdjacentHTML('beforeend', html);
+                apiListBasic.insertAdjacentHTML('afterbegin', html);
                 document.getElementById(id).querySelector('textarea').addEventListener('paste', (e) => handleCurlPaste(e, addBasicApiItem));
             }
 
@@ -846,6 +916,7 @@
                 a.href = URL.createObjectURL(blob);
                 a.download = `basic_test_report_${new Date().getTime()}.txt`;
                 document.body.appendChild(a);
+                isDownloadingFile = true;
                 a.click();
                 document.body.removeChild(a);
                 showToast('Đã tải báo cáo xuống thành công!');
@@ -856,6 +927,7 @@
                     const res = await fetch('/api/stop_basic?session_id=' + currentSessionId, { method: 'POST' });
                     const data = await res.json();
                     if (data.status === 'success') {
+                        isDownloadingFile = true;
                         window.location.href = '/api/download_basic_log?session_id=' + currentSessionId;
                         showToast('Đã dừng và tự động tải file log.');
                     }
@@ -976,6 +1048,9 @@
                     });
                 });
 
+                state.apis.reverse();
+                state.basicApis.reverse();
+
                 fetch('/api/database?session_id=' + currentSessionId + '&format=' + format, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -995,13 +1070,13 @@
                     if (state.jwtToken) jwtToken = state.jwtToken;
 
                     if (state.apis && state.apis.length > 0) {
-                        state.apis.forEach(api => {
+                        state.apis.reverse().forEach(api => {
                             apiCount++;
                             const id = `api-${apiCount}`;
                             const html = `
-                        <div class="api-item" id="${id}">
+                        <div class="api-item" id="${id}" style="position: relative;">
                             <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${api.name}:</label>
-                            <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                            <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer; z-index: 10;">🔍 Chi tiết</button>
                             <textarea placeholder="Dán lệnh cURL vào đây...">${api.curl}</textarea>
                             <div class="api-config-row">
                                 <div class="api-rates">
@@ -1019,13 +1094,13 @@
                     }
 
                     if (state.basicApis && state.basicApis.length > 0) {
-                        state.basicApis.forEach(api => {
+                        state.basicApis.reverse().forEach(api => {
                             apiCountBasic++;
                             const id = `api-basic-${apiCountBasic}`;
                             const html = `
-                        <div class="api-item basic-api-item" id="${id}">
+                        <div class="api-item basic-api-item" id="${id}" style="position: relative;">
                             <label class="api-title" title="Nhấp đúp để đổi tên" style="cursor: pointer; font-weight: bold; color: var(--primary);">${api.name}:</label>
-                            <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer;">🔍 Chi tiết</button>
+                            <button type="button" class="btn btn-view-api" style="position: absolute; top: 12px; right: 12px; padding: 2px 10px; font-size: 12px; background: #0ea5e9; border: none; border-radius: 4px; color: #fff; cursor: pointer; z-index: 10;">🔍 Chi tiết</button>
                             <textarea placeholder="Dán lệnh cURL vào đây...">${api.curl}</textarea>
                             <div class="api-config-row">
                                 <div class="api-rates">
@@ -1112,30 +1187,41 @@
         }
 
         function handleViewApiClick(e) {
-            if (e.target.classList.contains('btn-view-api')) {
-                const apiItem = e.target.closest('.api-item');
-                const title = apiItem.querySelector('.api-title').textContent.replace(':', '').trim();
-                let curlText = apiItem.querySelector('textarea').value.trim();
-                
-                // Format the curl a bit nicely (split -H and other flags to new lines)
-                let formattedCurl = curlText;
+            let target = e.target;
+            if (!target || typeof target.closest !== 'function') return;
+            const btn = target.closest('.btn-view-api');
+            if (btn) {
                 try {
-                    // Cố gắng format cho dễ nhìn
-                    formattedCurl = curlText.replace(/ -H /g, ' \\n  -H ')
-                                           .replace(/ -d /g, ' \\n  -d ')
-                                           .replace(/ --data /g, ' \\n  --data ')
-                                           .replace(/ -X /g, ' \\n  -X ');
-                } catch(err) {}
+                    const apiItem = btn.closest('.api-item');
+                    if (!apiItem) return;
+                    const apiTitleEl = apiItem.querySelector('.api-title');
+                    const title = apiTitleEl ? apiTitleEl.textContent.replace(':', '').trim() : "Unknown API";
+                    
+                    const textareaEl = apiItem.querySelector('textarea');
+                    if (!textareaEl) return;
+                    let curlText = textareaEl.value.trim();
+                    
+                    // Format the curl a bit nicely (split -H and other flags to new lines)
+                    let formattedCurl = curlText;
+                    try {
+                        // Cố gắng format cho dễ nhìn
+                        formattedCurl = curlText.replace(/ -H /g, ' \n  -H ')
+                                               .replace(/ -d /g, ' \n  -d ')
+                                               .replace(/ --data /g, ' \n  --data ')
+                                               .replace(/ -X /g, ' \n  -X ');
+                    } catch(err) {}
 
-                document.getElementById('apiInfoTitle').textContent = "Chi tiết: " + title;
-                document.getElementById('apiInfoContent').innerHTML = formattedCurl.replace(/\\n/g, '<br>');
-                currentCurlToCopy = curlText;
-                apiInfoModal.style.display = "block";
+                    document.getElementById('apiInfoTitle').textContent = "Chi tiết: " + title;
+                    document.getElementById('apiInfoContent').innerHTML = formattedCurl.replace(/\n/g, '<br>');
+                    currentCurlToCopy = curlText;
+                    apiInfoModal.style.display = "block";
+                } catch (err) {
+                    console.error("Global handleViewApiClick error:", err);
+                }
             }
         }
 
-        document.getElementById('api-list').addEventListener('click', handleViewApiClick);
-        document.getElementById('api-list-basic').addEventListener('click', handleViewApiClick);
+        document.body.addEventListener('click', handleViewApiClick);
 
 </script>
 </body>

@@ -470,7 +470,7 @@ async def get_status(session_id: str, last_id: int = -1):
         "is_running": s.is_running,
         "stats": s.stats,
         "logs": new_logs,
-        "last_id": s.log_counter - 1,
+        "last_id": s.log_counter,
         "thresholds": s.threshold_alerts
     }
 
@@ -535,11 +535,10 @@ async def stop_basic(session_id: str):
 
 @app.get("/api/download_basic_log")
 async def download_basic_log(session_id: str):
+    from fastapi.responses import FileResponse
     s = get_session(session_id)
     if not getattr(s, "basic_log_filename", None) or not os.path.exists(s.basic_log_filename):
         return {"status": "error", "message": "Không tìm thấy file log!"}
-    from fastapi.responses import FileResponse
-    import os
     return FileResponse(path=s.basic_log_filename, filename=os.path.basename(s.basic_log_filename), media_type='application/json')
 
 @app.get("/api/status_basic")
@@ -558,7 +557,7 @@ async def get_status_basic(session_id: str, last_id: int = -1):
         "stats": s.basic_stats,
         "api_stats": s.basic_api_stats,
         "logs": new_logs,
-        "last_id": s.basic_log_counter - 1
+        "last_id": s.basic_log_counter
     }
 
 async def bomb_manager(parsed_apis, session_id):
