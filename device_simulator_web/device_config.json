@@ -1,0 +1,21 @@
+{
+    "BROKER_HOST": "103.252.123.105",
+    "BROKER_PORT": 1883,
+    "NUM_DEV": 500,
+    "START_INDEX": 0,
+    "DEVICE_CODE_PREFIX": "b",
+    "DEVICE_ID_PREFIX": "rd_",
+    "TELEMETRY_INTERVAL": 50,
+    "LOG_FILE_CSV": "logs/device_stats.csv",
+    "LOG_INTERVAL": 60,
+    "TELEMETRY_TOPIC": "v1/devices/me/telemetry",
+    "RPC_REQUEST_TOPIC": "v1/devices/me/rpc/request/{}",
+    "RESPONSE_RPC": true,
+    "TELEMETRY_DATA": {
+        "KEY1": 1,
+        "KEY2": false,
+        "KEY3": false,
+        "KEY4": 0,
+        "KEY5": "0.0.13"
+    }
+}

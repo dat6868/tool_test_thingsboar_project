@@ -10,26 +10,58 @@ import threading
 import random
 
 # =========================================================
-# CẤU HÌNH THÔNG SỐ CHÍNH (TÙY CHỈNH TẠI ĐÂY)
+# CẤU HÌNH THÔNG SỐ CHÍNH (TỰ ĐỘNG ĐỌC TỪ FILE CẤU HÌNH JSON NẾU CÓ)
 # =========================================================
-# 1. Cấu hình MQTT Broker
+# Giá trị mặc định (Fallback)
 BROKER_HOST = "36.50.232.86"
 BROKER_PORT = 1883
-
-# 2. Cấu hình Load Test
 NUM_DEV = 165                 # Số lượng thiết bị ảo muốn giả lập
 START_INDEX = 0               # Chỉ số bắt đầu để sinh mã thiết bị
 DEVICE_CODE_PREFIX = "b"      # Tiền tố mã thiết bị (VD: a00000001)
 DEVICE_ID_PREFIX = "rd_"      # Tiền tố ID thiết bị dùng làm user/pass đăng nhập (VD: rd_a00000001)
 TELEMETRY_INTERVAL = 50       # Chu kỳ gửi bản tin trạng thái Telemetry định kỳ (giây)
-
-# 3. Cấu hình Log
 LOG_FILE_CSV = "logs/device_stats.csv" # File xuất thống kê dạng CSV
 LOG_INTERVAL = 60                      # Chu kỳ in thống kê ra màn hình và file (giây)
-
-# 4. Cấu hình Topic giao tiếp
 TELEMETRY_TOPIC = "v1/devices/me/telemetry"
 RPC_REQUEST_TOPIC = "v1/devices/me/rpc/request/{}"
+TELEMETRY_DATA = {
+    "mode": 1,
+    "relay1": False,
+    "relay2": False,
+    "dim": 0,
+    "vercode": "0.0.13"
+}
+RESPONSE_RPC = True  # Phản hồi các bản tin RPC hay không
+
+# Đọc cấu hình từ file JSON
+config_path = "device_config.json"
+web_config_path = "../device_simulator_web/device_config.json"
+if os.path.exists(web_config_path):
+    config_path = web_config_path
+elif os.path.exists(config_path):
+    pass
+else:
+    config_path = None
+
+if config_path:
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            cfg = json.load(f)
+            BROKER_HOST = cfg.get("BROKER_HOST", BROKER_HOST)
+            BROKER_PORT = int(cfg.get("BROKER_PORT", BROKER_PORT))
+            NUM_DEV = int(cfg.get("NUM_DEV", NUM_DEV))
+            START_INDEX = int(cfg.get("START_INDEX", START_INDEX))
+            DEVICE_CODE_PREFIX = cfg.get("DEVICE_CODE_PREFIX", DEVICE_CODE_PREFIX)
+            DEVICE_ID_PREFIX = cfg.get("DEVICE_ID_PREFIX", DEVICE_ID_PREFIX)
+            TELEMETRY_INTERVAL = int(cfg.get("TELEMETRY_INTERVAL", TELEMETRY_INTERVAL))
+            LOG_FILE_CSV = cfg.get("LOG_FILE_CSV", LOG_FILE_CSV)
+            LOG_INTERVAL = int(cfg.get("LOG_INTERVAL", LOG_INTERVAL))
+            TELEMETRY_TOPIC = cfg.get("TELEMETRY_TOPIC", TELEMETRY_TOPIC)
+            RPC_REQUEST_TOPIC = cfg.get("RPC_REQUEST_TOPIC", RPC_REQUEST_TOPIC)
+            TELEMETRY_DATA = cfg.get("TELEMETRY_DATA", TELEMETRY_DATA)
+            RESPONSE_RPC = bool(cfg.get("RESPONSE_RPC", RESPONSE_RPC))
+    except Exception as e:
+        print(f"Lỗi khi đọc file cấu hình JSON: {e}. Sử dụng cấu hình mặc định.")
 # =========================================================
 
 os.makedirs("logs", exist_ok=True)
@@ -90,15 +122,19 @@ class DeviceClient:
 
         # Giả lập Database local
         self.telemetry_db = {
-            "mode": 1,
-            "relay1": False,
-            "relay2": False,
-            "dim": 0,
             "number_scene": 0,
             "scene_now": 0,
-            "mac": self.mac_address,
-            "vercode": "0.0.13"
+            "mac": self.mac_address
         }
+        if isinstance(TELEMETRY_DATA, dict):
+            for k, v in TELEMETRY_DATA.items():
+                self.telemetry_db[k] = v
+        else:
+            self.telemetry_db["mode"] = 1
+            self.telemetry_db["relay1"] = False
+            self.telemetry_db["relay2"] = False
+            self.telemetry_db["dim"] = 0
+            self.telemetry_db["vercode"] = "0.0.13"
         self.scene_db = {}
         self.last_telemetry_time = time.time() - TELEMETRY_INTERVAL # Đảm bảo gửi luôn ngay khi khởi động
 
@@ -162,8 +198,11 @@ class DeviceClient:
                         "code": 0
                     }
                 }
-                self.publish("v1/devices/me/rpc/response/{}".format(identify), json.dumps(payload_response))
-                print(f"Gửi phản hồi RPC đến topic v1/devices/me/rpc/response/{identify}: {payload_response}")
+                if RESPONSE_RPC:
+                    self.publish("v1/devices/me/rpc/response/{}".format(identify), json.dumps(payload_response))
+                    print(f"Gửi phản hồi RPC đến topic v1/devices/me/rpc/response/{identify}: {payload_response}")
+                else:
+                    print(f"Nhận được RPC '{method}' nhưng KHÔNG gửi phản hồi (RESPONSE_RPC = False)")
                 # time.sleep(1) # Đã tạm ẩn đi theo yêu cầu test để không block luồng mạng
             if isinstance(payload, dict):
                 req_method = payload.get("method")

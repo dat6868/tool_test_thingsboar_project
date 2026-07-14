@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Simulator Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151d30;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.8rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input {
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+            display: inline-block;
+        }
+
+        .dot.running {
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
+        .dot.stopped {
+            background-color: var(--danger);
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.4;
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .terminal-card {
+            background-color: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+            min-height: 400px;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.5rem;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot:nth-child(1) {
+            background-color: #ff5f56;
+        }
+
+        .terminal-dot:nth-child(2) {
+            background-color: #ffbd2e;
+        }
+
+        .terminal-dot:nth-child(3) {
+            background-color: #27c93f;
+        }
+
+        .terminal-body {
+            background-color: #050811;
+            border-radius: 6px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #10b981;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 300px;
+            max-height: 500px;
+        }
+
+        .terminal-line {
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 10000;
+        }
+
+        .toast {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left-color: var(--success);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>DEVICE SIMULATOR DASHBOARD</h1>
+        <div style="font-size: 0.9rem; color: var(--text-muted);" id="current-time"></div>
+    </header>
+
+    <div class="container">
+        <!-- Bên trái: Form Cấu hình -->
+        <div class="card">
+            <h2 class="card-title">⚙️ Cấu hình giả lập</h2>
+
+            <form id="config-form">
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- MQTT Broker -->
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: rgba(255, 255, 255, 0.01);">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #fff;">1. MQTT Broker</span>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="BROKER_HOST">Host Broker</label>
+                                <input type="text" id="BROKER_HOST" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="BROKER_PORT">Port Broker</label>
+                                <input type="number" id="BROKER_PORT" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Load Test Parameters -->
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: rgba(255, 255, 255, 0.01);">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #fff;">2. Cấu hình giả lập</span>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="NUM_DEV">Số lượng thiết bị ảo</label>
+                                <input type="number" id="NUM_DEV" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="START_INDEX">Chỉ số bắt đầu (00000000)</label>
+                                <input type="number" id="START_INDEX" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="DEVICE_CODE_PREFIX">Tiền tố mã thiết bị (VD: 'b' -> b00000001)</label>
+                                <input type="text" id="DEVICE_CODE_PREFIX" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="DEVICE_ID_PREFIX">Tiền tố ID thiết bị (VD: 'device_wifi_' ->
+                                    device_wifi_b00000001)</label>
+                                <input type="text" id="DEVICE_ID_PREFIX" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="TELEMETRY_INTERVAL">Chu kỳ gửi Telemetry (giây)</label>
+                            <input type="number" id="TELEMETRY_INTERVAL" required>
+                        </div>
+                    </div>
+
+                    <!-- Topic & Log -->
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: rgba(255, 255, 255, 0.01);">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #fff;">3. Log & Topic</span>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="LOG_INTERVAL">Chu kỳ ghi log (giây)</label>
+                                <input type="number" id="LOG_INTERVAL" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="LOG_FILE_CSV">Đường dẫn file CSV thống kê</label>
+                                <input type="text" id="LOG_FILE_CSV" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="TELEMETRY_TOPIC">Topic gửi Telemetry</label>
+                            <input type="text" id="TELEMETRY_TOPIC" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="RPC_REQUEST_TOPIC">Topic gửi RPC Request</label>
+                            <input type="text" id="RPC_REQUEST_TOPIC" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="RESPONSE_RPC">Phản hồi bản tin RPC từ ThingsBoard</label>
+                            <select id="RESPONSE_RPC" style="background-color: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem 1rem; color: var(--text-main); font-family: inherit; font-size: 0.95rem; width: 100%; transition: all 0.2s; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239ca3af%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem top 50%; background-size: 0.65rem auto; padding-right: 2.5rem;">
+                                <option value="true">🟢 Tự động phản hồi (Có Rsp)</option>
+                                <option value="false">🔴 Không phản hồi (Bỏ qua)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Payload Config -->
+                    <div
+                        style="display: flex; flex-direction: column; gap: 0.8rem; border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; background: rgba(255, 255, 255, 0.01);">
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #fff;">4. Dữ liệu Telemetry (JSON)</span>
+                        <div class="form-group">
+                            <label for="TELEMETRY_DATA">Các key gửi định kỳ trong bản tin Telemetry</label>
+                            <textarea id="TELEMETRY_DATA" style="background-color: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem 1rem; color: var(--text-main); font-family: 'Consolas', monospace; font-size: 0.9rem; min-height: 120px; width: 100%; resize: vertical;" required></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; width: 100%;">💾 Lưu cấu
+                        hình</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bên phải: Điều khiển & Log Console -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Trạng thái & Nút Start/Stop -->
+            <div class="card">
+                <h2 class="card-title">🖥️ Trạng thái & Điều khiển</h2>
+
+                <div class="status-container">
+                    <div class="status-indicator">
+                        <span id="status-dot" class="dot"></span>
+                        <span id="status-text">Đang kết nối...</span>
+                    </div>
+                    <div id="control-buttons">
+                        <button id="btn-toggle" class="btn btn-success">BẮT ĐẦU</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-connected">0</span>
+                        <span class="stat-label">🟢 Thiết bị đã kết nối</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-disconnected">0</span>
+                        <span class="stat-label">🔴 Thiết bị mất kết nối</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-sent">0</span>
+                        <span class="stat-label">📤 Tổng tin nhắn gửi</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-received">0</span>
+                        <span class="stat-label">📥 Tổng tin nhắn nhận</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-rpc-sent">0</span>
+                        <span class="stat-label">⚡ Lượng RPC gửi</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-success-rate">0%</span>
+                        <span class="stat-label">📈 Tỷ lệ thành công</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terminal Logs -->
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                    </div>
+                    <span style="font-size: 0.8rem; font-family: monospace; color: var(--text-muted);">LOCUST SIMULATOR
+                        TERMINAL</span>
+                </div>
+                <div class="terminal-body" id="terminal-body">
+                    <div class="terminal-line">Đang đợi khởi động log...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
