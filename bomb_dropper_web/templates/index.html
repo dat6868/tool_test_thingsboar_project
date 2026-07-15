@@ -320,6 +320,11 @@
                     curls.reverse().forEach((c, idx) => {
                         addFunc(`API Tự động ${curls.length - idx}`, "curl " + c.trim());
                     });
+                    // Xóa phần tử trống ban đầu (nơi người dùng paste đè danh sách)
+                    const parentItem = e.target.closest('.api-item') || e.target.closest('.basic-api-item');
+                    if (parentItem) {
+                        parentItem.remove();
+                    }
                 }
             }
 
@@ -920,6 +925,13 @@
                 a.click();
                 document.body.removeChild(a);
                 showToast('Đã tải báo cáo xuống thành công!');
+
+                // Đồng thời lưu một bản sao báo cáo lên server
+                fetch('/api/save_report?session_id=' + currentSessionId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ report_text: report })
+                }).catch(e => console.error("Lỗi sao lưu báo cáo lên server:", e));
             });
 
             btnToggleBasic.addEventListener('click', async () => {

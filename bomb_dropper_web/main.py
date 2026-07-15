@@ -399,8 +399,15 @@ async def start_bombing(req: StartRequest, session_id: str):
     
     from datetime import datetime, timezone, timedelta
     tz_vn = timezone(timedelta(hours=7))
-    timestamp = datetime.now(tz_vn).strftime("%d_%m_%Y-%H_%M_%S")
-    s.log_filename = f"{get_session_folder(session_id)}/bomb_logs_{timestamp}.json"
+    now_vn = datetime.now(tz_vn)
+    day = now_vn.strftime("%d_%m_%Y")
+    timestamp = now_vn.strftime("%d_%m_%Y-%H_%M_%S")
+    
+    # Tạo thư mục log theo ngày
+    day_folder = os.path.join(get_session_folder(session_id), f"log_{day}")
+    os.makedirs(day_folder, exist_ok=True)
+    
+    s.log_filename = os.path.abspath(os.path.join(day_folder, f"bomb_logs_{timestamp}.json"))
     
     parsed_apis = []
     for cfg in req.apis:
@@ -513,8 +520,15 @@ async def start_basic(req: StartBasicRequest, session_id: str):
     
     from datetime import datetime, timezone, timedelta
     tz_vn = timezone(timedelta(hours=7))
-    timestamp = datetime.now(tz_vn).strftime("%d_%m_%Y-%H_%M_%S")
-    s.basic_log_filename = f"{get_session_folder(session_id)}/basic_logs_{timestamp}.json"
+    now_vn = datetime.now(tz_vn)
+    day = now_vn.strftime("%d_%m_%Y")
+    timestamp = now_vn.strftime("%d_%m_%Y-%H_%M_%S")
+    
+    # Tạo thư mục log theo ngày
+    day_folder = os.path.join(get_session_folder(session_id), f"log_{day}")
+    os.makedirs(day_folder, exist_ok=True)
+    
+    s.basic_log_filename = os.path.abspath(os.path.join(day_folder, f"basic_logs_{timestamp}.json"))
     
     push_basic_log(session_id, f"Đã nạp {len(parsed_apis)} API. Bắt đầu kiểm tra cơ bản...")
     
@@ -532,6 +546,29 @@ async def stop_basic(session_id: str):
         task.cancel()
     push_basic_log(session_id, "Đã nhận lệnh DỪNG kiểm tra cơ bản.")
     return {"status": "success"}
+
+class SaveReportRequest(BaseModel):
+    report_text: str
+
+@app.post("/api/save_report")
+async def save_report(req: SaveReportRequest, session_id: str):
+    s = get_session(session_id)
+    from datetime import datetime, timezone, timedelta
+    tz_vn = timezone(timedelta(hours=7))
+    now_vn = datetime.now(tz_vn)
+    day = now_vn.strftime("%d_%m_%Y")
+    timestamp = now_vn.strftime("%d_%m_%Y-%H_%M_%S")
+    
+    day_folder = os.path.join(get_session_folder(session_id), f"log_{day}")
+    os.makedirs(day_folder, exist_ok=True)
+    
+    report_filename = os.path.abspath(os.path.join(day_folder, f"basic_test_report_{timestamp}.txt"))
+    try:
+        with open(report_filename, "w", encoding="utf-8") as f:
+            f.write(req.report_text)
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/api/download_basic_log")
 async def download_basic_log(session_id: str):
