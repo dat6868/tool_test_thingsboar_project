@@ -320,7 +320,7 @@ class MqttDeviceUser(User):
                 self.client.last_telemetry_time = current_time
 
             # Trigger 3: Kiểm tra Kịch bản (Scene) chạy tự động
-            current_day_str = now.strftime("%a") # VD: "Mon", "Tue"
+            current_day_str = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][now.weekday()] # VD: "Mon", "Tue"
             current_time_str = f"{now.hour}:{now.minute:02d}" # VD: "3:20"
             
             for scene_id, scene_info in self.client.scene_db.items():

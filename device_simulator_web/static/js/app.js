@@ -4,21 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
     const btnToggle = document.getElementById('btn-toggle');
-    const terminalBody = document.getElementById('terminal-body');
+    const btnLockConfig = document.getElementById('btn-lock-config');
+
     const toastContainer = document.getElementById('toast-container');
     const currentTimeEl = document.getElementById('current-time');
-
-    // Stat Elements
-    const statConnected = document.getElementById('stat-connected');
-    const statDisconnected = document.getElementById('stat-disconnected');
-    const statSent = document.getElementById('stat-sent');
-    const statReceived = document.getElementById('stat-received');
-    const statRpcSent = document.getElementById('stat-rpc-sent');
-    const statSuccessRate = document.getElementById('stat-success-rate');
 
     let isRunning = false;
     let pollInterval = null;
     let renderedLogLinesCount = 0;
+    let isConfigLocked = false;
 
     // 1. Clock in Header
     function updateClock() {
@@ -85,9 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 4. Save Config to Backend
-    configForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
+    async function saveConfig() {
         const inputs = configForm.querySelectorAll('input, textarea, select');
         const data = {};
         let hasError = false;
@@ -103,13 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasError = true;
                 }
             } else {
-                // Ép kiểu số nếu input có kiểu number
                 data[input.id] = input.type === 'number' ? parseInt(val) : val;
             }
         });
 
+        if (hasError) return false;
+
         // Validation cho dải chỉ số RPC không phản hồi
-        if (!hasError && rpcSelect && rpcSelect.value === 'range') {
+        if (rpcSelect && rpcSelect.value === 'range') {
             const startIndex = parseInt(document.getElementById('START_INDEX').value) || 0;
             const numDev = parseInt(document.getElementById('NUM_DEV').value) || 0;
             const skipStart = parseInt(document.getElementById('RESPONSE_RPC_SKIP_START').value) || 0;
@@ -120,15 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (skipStart < minAllowed || skipStart > maxAllowed) {
                 showToast(`Chỉ số bắt đầu bỏ qua (${skipStart}) phải nằm trong khoảng từ ${minAllowed} đến ${maxAllowed}!`, 'error');
-                hasError = true;
+                return false;
             }
-            if (!hasError && (skipEnd < skipStart || skipEnd > maxAllowed)) {
+            if (skipEnd < skipStart || skipEnd > maxAllowed) {
                 showToast(`Chỉ số kết thúc bỏ qua (${skipEnd}) phải từ ${skipStart} đến ${maxAllowed}!`, 'error');
-                hasError = true;
+                return false;
             }
         }
-
-        if (hasError) return;
 
         try {
             const res = await fetch('/api/config', {
@@ -138,14 +129,62 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const resData = await res.json();
             if (resData.status === 'success') {
-                showToast('Đã lưu cấu hình giả lập thành công!');
+                return true;
             } else {
                 showToast(resData.message, 'error');
+                return false;
             }
         } catch (err) {
             showToast('Lỗi mạng khi lưu cấu hình: ' + err.message, 'error');
+            return false;
+        }
+    }
+
+    configForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const success = await saveConfig();
+        if (success) {
+            showToast('Đã lưu cấu hình giả lập thành công!');
         }
     });
+
+    // 4.1 Khóa/Mở khóa chỉnh sửa Cấu hình (Có mật khẩu bảo vệ)
+    if (btnLockConfig) {
+        btnLockConfig.addEventListener('click', () => {
+            const inputs = configForm.querySelectorAll('input, textarea, select, #btn-save-config');
+            if (!isConfigLocked) {
+                // Đang mở -> Tiến hành khóa (Không cần mật khẩu)
+                isConfigLocked = true;
+                inputs.forEach(el => el.disabled = true);
+                btnLockConfig.textContent = '🔒 ĐÃ KHÓA';
+                btnLockConfig.style.backgroundColor = '#ef4444';
+                showToast('Đã khóa chỉnh sửa cấu hình!');
+            } else {
+                // Đang khóa -> Tiến hành mở khóa (Yêu cầu mật khẩu)
+                const password = prompt('Nhập mật khẩu để mở khóa chỉnh sửa cấu hình:');
+                if (password === 'admin' || password === 'rangdong') {
+                    isConfigLocked = false;
+                    inputs.forEach(el => el.disabled = false);
+                    btnLockConfig.textContent = '🔓 MỞ KHÓA';
+                    btnLockConfig.style.backgroundColor = '#4b5563';
+                    showToast('Đã mở khóa cấu hình thành công!');
+                    if (window.rpcSelect) {
+                        const rpcRangeRow = document.getElementById('rpc-range-row');
+                        if (rpcRangeRow) {
+                            rpcRangeRow.style.display = window.rpcSelect.value === 'range' ? 'grid' : 'none';
+                        }
+                    }
+                } else {
+                    if (password !== null) {
+                        showToast('Mật khẩu không chính xác!', 'error');
+                    }
+                }
+            }
+        });
+    }
+
+    const btnStopAll = document.getElementById('btn-stop-all');
+    const procBody = document.getElementById('processes-list-body');
 
     // 5. Polling Status
     async function pollStatus() {
@@ -157,56 +196,76 @@ document.addEventListener('DOMContentLoaded', () => {
             isRunning = data.is_running;
             if (isRunning) {
                 statusDot.className = 'dot running';
-                statusText.textContent = 'ĐANG GIẢ LẬP';
-                btnToggle.textContent = 'DỪNG LẠI 🛑';
-                btnToggle.className = 'btn btn-danger';
-                configForm.querySelectorAll('input, textarea, select, button[type="submit"]').forEach(el => el.disabled = true);
+                statusText.textContent = `RUNNING (${data.processes.length} dải)`;
+                if (btnStopAll) btnStopAll.style.display = 'block';
             } else {
                 statusDot.className = 'dot stopped';
                 statusText.textContent = 'ĐANG DỪNG';
-                btnToggle.textContent = 'BẮT ĐẦU 🚀';
-                btnToggle.className = 'btn btn-success';
-                configForm.querySelectorAll('input, textarea, select, button[type="submit"]').forEach(el => el.disabled = false);
+                if (btnStopAll) btnStopAll.style.display = 'none';
             }
 
-            // Cập nhật Thống kê
-            statConnected.textContent = data.stats.connected || 0;
-            statDisconnected.textContent = data.stats.disconnected || 0;
-            statSent.textContent = data.stats.sent || 0;
-            statReceived.textContent = data.stats.received || 0;
-            statRpcSent.textContent = data.stats.rpc_sent || 0;
-            statSuccessRate.textContent = (data.stats.success_rate || 0).toFixed(2) + '%';
 
-            // Cập nhật log lên Terminal
-            if (data.logs && data.logs.length > 0) {
-                // Nếu số dòng log nhận được nhiều hơn số dòng hiện tại
-                if (data.logs.length > renderedLogLinesCount) {
-                    // Xóa dòng chờ nếu có
-                    if (renderedLogLinesCount === 0) {
-                        terminalBody.innerHTML = '';
-                    }
 
-                    const newLines = data.logs.slice(renderedLogLinesCount);
-                    newLines.forEach(line => {
-                        const div = document.createElement('div');
-                        div.className = 'terminal-line';
+
+
+            // Dựng bảng danh sách tiến trình đang chạy
+            if (procBody) {
+                if (data.processes && data.processes.length > 0) {
+                    procBody.innerHTML = '';
+                    data.processes.forEach(p => {
+                        const maxVal = p.start_index + p.num_dev;
+                        const paddingLen = Math.max(3, maxVal.toString().length);
                         
-                        // Thêm màu đỏ cho dòng báo lỗi nếu có
-                        if (line.includes('Disconnected:') && !line.includes('Disconnected: 0,')) {
-                            div.style.color = '#ef4444';
-                        }
+                        const firstNumStr = String(p.start_index + 1).padStart(paddingLen, '0');
+                        const lastNumStr = String(p.start_index + p.num_dev).padStart(paddingLen, '0');
                         
-                        div.textContent = line;
-                        terminalBody.appendChild(div);
+                        const firstId = `${p.device_id_prefix}${p.device_code_prefix}${firstNumStr}`;
+                        const lastId = `${p.device_id_prefix}${p.device_code_prefix}${lastNumStr}`;
+                        
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                        tr.innerHTML = `
+                            <td style="padding: 0.4rem; color: #a5b4fc; font-family: monospace;">${p.pid}</td>
+                            <td style="padding: 0.4rem; color: #e2e8f0;">
+                                <span style="font-weight:600; color:#38bdf8;">${firstId}</span> &rarr; <span style="font-weight:600; color:#38bdf8;">${lastId}</span>
+                                <br><span style="font-size:0.7rem; color:var(--text-muted);">(${p.num_dev} TB | Broker: ${p.broker_host})</span>
+                            </td>
+                            <td style="padding: 0.4rem; text-align: right;">
+                                <button class="btn-stop-single" data-pid="${p.pid}" style="background: #ef4444; color:#fff; border:none; padding:0.2rem 0.4rem; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.2s; white-space:nowrap;">DỪNG 🛑</button>
+                            </td>
+                        `;
+                        procBody.appendChild(tr);
                     });
 
-                    renderedLogLinesCount = data.logs.length;
-                    // Tự động cuộn xuống cuối
-                    terminalBody.scrollTop = terminalBody.scrollHeight;
+                    // Gắn sự kiện dừng đơn lẻ
+                    procBody.querySelectorAll('.btn-stop-single').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const pid = btn.getAttribute('data-pid');
+                            try {
+                                const res = await fetch('/api/stop', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ pid: parseInt(pid) })
+                                });
+                                const resData = await res.json();
+                                if (resData.status === 'success') {
+                                    showToast(`Đã dừng tiến trình PID ${pid} thành công!`);
+                                    pollStatus();
+                                } else {
+                                    showToast(resData.message, 'error');
+                                }
+                            } catch (err) {
+                                showToast('Lỗi mạng khi dừng tiến trình: ' + err.message, 'error');
+                            }
+                        });
+                    });
+                } else {
+                    procBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" style="padding: 0.5rem; text-align: center; color: var(--text-muted);">Không có dải giả lập nào đang chạy.</td>
+                        </tr>
+                    `;
                 }
-            } else if (!isRunning) {
-                renderedLogLinesCount = 0;
-                terminalBody.innerHTML = '<div class="terminal-line">Đang đợi khởi động giả lập...</div>';
             }
 
         } catch (e) {
@@ -214,27 +273,53 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 6. Start/Stop Button Click Listener
+    // 6. Start Button Listener (Khởi chạy dải thiết bị mới)
     btnToggle.addEventListener('click', async () => {
-        const url = isRunning ? '/api/stop' : '/api/start';
-        const actionText = isRunning ? 'Dừng' : 'Bắt đầu';
-
         try {
-            const res = await fetch(url, { method: 'POST' });
+            showToast('Đang lưu cấu hình...');
+            const saveSuccess = await saveConfig();
+            if (!saveSuccess) {
+                return; // Có lỗi validation hoặc mạng khi lưu cấu hình
+            }
+
+            showToast('Đang khởi chạy dải thiết bị mới...');
+            const res = await fetch('/api/start', { method: 'POST' });
             const data = await res.json();
             if (data.status === 'success') {
-                showToast(`Đã gửi lệnh ${actionText} thành công!`);
-                pollStatus(); // Cập nhật trạng thái tức thì
+                showToast('Khởi chạy dải giả lập mới thành công!');
+                pollStatus();
             } else {
                 showToast(data.message, 'error');
             }
         } catch (err) {
-            showToast(`Lỗi khi gửi lệnh ${actionText}: ` + err.message, 'error');
+            showToast('Lỗi mạng khi khởi chạy: ' + err.message, 'error');
         }
     });
+
+    // 7. Stop All Button Listener
+    if (btnStopAll) {
+        btnStopAll.addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast('Đã dừng toàn bộ tiến trình giả lập thành công!');
+                    pollStatus();
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi mạng khi dừng toàn bộ: ' + err.message, 'error');
+            }
+        });
+    }
 
     // Khởi chạy ban đầu
     loadConfig();
     pollStatus();
-    setInterval(pollStatus, 1000); // Polling mỗi giây
+    setInterval(pollStatus, 5000); // Polling mỗi 5 giây để cập nhật nhanh danh sách dải và số liệu
 });

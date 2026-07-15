@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Device Simulator Web generated files
+device_simulator_web/folder_script/
+device_simulator_web/logs/
+device_simulator_web/device_config.json
