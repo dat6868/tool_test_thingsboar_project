@@ -9,14 +9,21 @@ import paho.mqtt.client as mqtt
 import threading
 
 # Bắt buộc mã hóa UTF-8 cho dòng xuất chuẩn để tránh lỗi CP1252/charmap trên Windows
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', write_through=True)
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', write_through=True)
+
+# Khóa in để tránh xen lẫn dòng log giữa các luồng chạy song song
+_print = print
+print_lock = threading.Lock()
+def print(*args, **kwargs):
+    with print_lock:
+        _print(*args, **kwargs)
 
 # === CONFIG_START ===
 # Default parameters (Fallback)
 BROKER_HOST = "36.50.232.86"
 BROKER_PORT = 1883
-NUM_DEV = 165
+END_INDEX = 1000
 START_INDEX = 0
 DEVICE_CODE_PREFIX = "b"
 DEVICE_ID_PREFIX = "rd_"
@@ -44,7 +51,7 @@ if os.path.exists(config_path):
             cfg = json.load(f)
             BROKER_HOST = cfg.get("BROKER_HOST", BROKER_HOST)
             BROKER_PORT = int(cfg.get("BROKER_PORT", BROKER_PORT))
-            NUM_DEV = int(cfg.get("NUM_DEV", NUM_DEV))
+            END_INDEX = int(cfg.get("END_INDEX", END_INDEX))
             START_INDEX = int(cfg.get("START_INDEX", START_INDEX))
             DEVICE_CODE_PREFIX = cfg.get("DEVICE_CODE_PREFIX", DEVICE_CODE_PREFIX)
             DEVICE_ID_PREFIX = cfg.get("DEVICE_ID_PREFIX", DEVICE_ID_PREFIX)
@@ -70,8 +77,7 @@ all_devices = []
 class DeviceClient:
     def __init__(self, index: int):
         self.index = index
-        max_val = START_INDEX + NUM_DEV
-        padding_len = max(3, len(str(max_val)))
+        padding_len = len(str(END_INDEX))
         self.device_code = f"{DEVICE_CODE_PREFIX}{index:0{padding_len}d}"
         self.device_id = f"{DEVICE_ID_PREFIX}{self.device_code}"
         self.mac_address = self.device_code
@@ -189,6 +195,7 @@ class DeviceClient:
                 elif req_method == "setScene":
                     params = payload.get("params", {})
                     scene_id = params.get("id")
+                    print(f"[{self.device_id}] 📥 Nhận setScene params: {params}")
                     if scene_id is not None:
                         self.scene_db[scene_id] = {
                             "condition": params.get("condition", {}),
@@ -237,6 +244,7 @@ class DeviceClient:
     def send_run_scene(self, scene_id):
         payload = json.dumps({"method": "runScene", "params": {"mac": self.mac_address, "ruleId": scene_id}})
         self.publish(RPC_REQUEST_TOPIC.format(self.msg_id), payload)
+        print(f"[{self.device_id}] 🎬 Gửi bản tin runScene (ruleId={scene_id})")
         self.msg_id += 1
         self.rpc_sent += 1
 
@@ -274,8 +282,10 @@ def global_device_loop():
                     
                     if target_time:
                         try:
-                            h, m = target_time.split(":")
-                            target_time_norm = f"{int(h)}:{int(m):02d}"
+                            parts = target_time.split(":")
+                            h = int(parts[0])
+                            m = int(parts[1])
+                            target_time_norm = f"{h}:{m:02d}"
                         except:
                             target_time_norm = target_time
                     else:
@@ -287,12 +297,8 @@ def global_device_loop():
                             scene_info["last_run_minute"] = now.minute
                             
                             execute = scene_info.get("execute", {})
-                            if "relay1" in execute:
-                                device.telemetry_db["relay1"] = execute["relay1"]
-                            if "relay2" in execute:
-                                device.telemetry_db["relay2"] = execute["relay2"]
-                            if "dim" in execute:
-                                device.telemetry_db["dim"] = execute["dim"]
+                            for k, v in execute.items():
+                                device.telemetry_db[k] = v
                                 
                             device.telemetry_db["scene_now"] = scene_id
                             try:
@@ -356,7 +362,8 @@ def periodic_log():
 
 
 if __name__ == "__main__":
-    print(f"🚀 Bắt đầu giả lập MQTT Device (Không sử dụng Locust) - {NUM_DEV} thiết bị...")
+    num_devices = END_INDEX - START_INDEX
+    print(f"🚀 Bắt đầu giả lập MQTT Device (Không sử dụng Locust) - {num_devices} thiết bị (Chỉ số: {START_INDEX + 1} ➔ {END_INDEX})...")
     print(f"Broker: {BROKER_HOST}:{BROKER_PORT}")
     
     # Khởi tạo file log CSV
@@ -376,14 +383,14 @@ if __name__ == "__main__":
     device_thread.start()
 
     # Kết nối các thiết bị ảo
-    for i in range(START_INDEX + 1, START_INDEX + NUM_DEV + 1):
+    for i in range(START_INDEX + 1, END_INDEX + 1):
         device = DeviceClient(i)
         with client_lock:
             all_devices.append(device)
         # Giãn cách kết nối 50ms tránh nghẽn luồng
         time.sleep(0.05)
 
-    print(f"✅ Đã kết nối xong tất cả {NUM_DEV} thiết bị. Tiến trình đang hoạt động...")
+    print(f"✅ Đã kết nối xong tất cả {num_devices} thiết bị. Tiến trình đang hoạt động...")
     
     try:
         while True:

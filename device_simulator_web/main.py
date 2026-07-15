@@ -29,7 +29,7 @@ LOG_PATH = os.path.abspath("device_sim.log")
 DEFAULT_CONFIG = {
     "BROKER_HOST": "36.50.232.86",
     "BROKER_PORT": 1883,
-    "NUM_DEV": 165,
+    "END_INDEX": 1000,
     "START_INDEX": 0,
     "DEVICE_CODE_PREFIX": "b",
     "DEVICE_ID_PREFIX": "rd_",
@@ -53,7 +53,7 @@ DEFAULT_CONFIG = {
 class ConfigModel(BaseModel):
     BROKER_HOST: str
     BROKER_PORT: int
-    NUM_DEV: int
+    END_INDEX: int
     START_INDEX: int
     DEVICE_CODE_PREFIX: str
     DEVICE_ID_PREFIX: str
@@ -108,7 +108,7 @@ def get_sim_processes():
             script_name = match.group(1)
             script_path = os.path.join("folder_script", script_name)
             
-            num_dev = 0
+            end_index = 0
             start_index = 0
             code_prefix = ""
             id_prefix = ""
@@ -118,13 +118,13 @@ def get_sim_processes():
                 try:
                     with open(script_path, "r", encoding="utf-8") as f:
                         content = f.read()
-                        m_num = re.search(r'NUM_DEV\s*=\s*(\d+)', content)
+                        m_end = re.search(r'END_INDEX\s*=\s*(\d+)', content)
                         m_start = re.search(r'START_INDEX\s*=\s*(\d+)', content)
                         m_code = re.search(r'DEVICE_CODE_PREFIX\s*=\s*["\'](.*?)["\']', content)
                         m_id = re.search(r'DEVICE_ID_PREFIX\s*=\s*["\'](.*?)["\']', content)
                         m_host = re.search(r'BROKER_HOST\s*=\s*["\'](.*?)["\']', content)
                         
-                        if m_num: num_dev = int(m_num.group(1))
+                        if m_end: end_index = int(m_end.group(1))
                         if m_start: start_index = int(m_start.group(1))
                         if m_code: code_prefix = m_code.group(1)
                         if m_id: id_prefix = m_id.group(1)
@@ -135,7 +135,7 @@ def get_sim_processes():
             procs.append({
                 "pid": pid,
                 "script_name": script_name,
-                "num_dev": num_dev,
+                "end_index": end_index,
                 "start_index": start_index,
                 "device_code_prefix": code_prefix,
                 "device_id_prefix": id_prefix,
@@ -228,14 +228,12 @@ async def start_sim():
                 pass
 
         # Tính toán ID thiết bị đầu tiên và cuối cùng để đặt tên hậu tố theo chuẩn cấu hình
-        max_val = config['START_INDEX'] + config['NUM_DEV']
-        padding_len = max(3, len(str(max_val)))
+        padding_len = len(str(config['END_INDEX']))
         
         first_num = config['START_INDEX'] + 1
         first_dev = f"{config['DEVICE_CODE_PREFIX']}{first_num:0{padding_len}d}"
         
-        last_num = config['START_INDEX'] + config['NUM_DEV']
-        last_dev = f"{config['DEVICE_CODE_PREFIX']}{last_num:0{padding_len}d}"
+        last_dev = f"{config['DEVICE_CODE_PREFIX']}{config['END_INDEX']:0{padding_len}d}"
         
         broker_safe = config['BROKER_HOST'].replace('.', '_').replace(':', '_')
         suffix = f"{first_dev}_{last_dev}__{broker_safe}"
@@ -258,7 +256,7 @@ async def start_sim():
 # Default parameters (Fallback)
 BROKER_HOST = "{config['BROKER_HOST']}"
 BROKER_PORT = {config['BROKER_PORT']}
-NUM_DEV = {config['NUM_DEV']}
+END_INDEX = {config['END_INDEX']}
 START_INDEX = {config['START_INDEX']}
 DEVICE_CODE_PREFIX = "{config['DEVICE_CODE_PREFIX']}"
 DEVICE_ID_PREFIX = "{config['DEVICE_ID_PREFIX']}"

@@ -104,12 +104,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Validation cho dải chỉ số RPC không phản hồi
         if (rpcSelect && rpcSelect.value === 'range') {
             const startIndex = parseInt(document.getElementById('START_INDEX').value) || 0;
-            const numDev = parseInt(document.getElementById('NUM_DEV').value) || 0;
+            const endIndex = parseInt(document.getElementById('END_INDEX').value) || 0;
             const skipStart = parseInt(document.getElementById('RESPONSE_RPC_SKIP_START').value) || 0;
             const skipEnd = parseInt(document.getElementById('RESPONSE_RPC_SKIP_END').value) || 0;
             
             const minAllowed = startIndex + 1;
-            const maxAllowed = startIndex + numDev;
+            const maxAllowed = endIndex;
 
             if (skipStart < minAllowed || skipStart > maxAllowed) {
                 showToast(`Chỉ số bắt đầu bỏ qua (${skipStart}) phải nằm trong khoảng từ ${minAllowed} đến ${maxAllowed}!`, 'error');
@@ -213,14 +213,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.processes && data.processes.length > 0) {
                     procBody.innerHTML = '';
                     data.processes.forEach(p => {
-                        const maxVal = p.start_index + p.num_dev;
-                        const paddingLen = Math.max(3, maxVal.toString().length);
+                        const paddingLen = p.end_index.toString().length;
                         
                         const firstNumStr = String(p.start_index + 1).padStart(paddingLen, '0');
-                        const lastNumStr = String(p.start_index + p.num_dev).padStart(paddingLen, '0');
+                        const lastNumStr = String(p.end_index).padStart(paddingLen, '0');
                         
                         const firstId = `${p.device_id_prefix}${p.device_code_prefix}${firstNumStr}`;
                         const lastId = `${p.device_id_prefix}${p.device_code_prefix}${lastNumStr}`;
+                        
+                        const num_dev = p.end_index - p.start_index;
                         
                         const tr = document.createElement('tr');
                         tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
@@ -228,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <td style="padding: 0.4rem; color: #a5b4fc; font-family: monospace;">${p.pid}</td>
                             <td style="padding: 0.4rem; color: #e2e8f0;">
                                 <span style="font-weight:600; color:#38bdf8;">${firstId}</span> &rarr; <span style="font-weight:600; color:#38bdf8;">${lastId}</span>
-                                <br><span style="font-size:0.7rem; color:var(--text-muted);">(${p.num_dev} TB | Broker: ${p.broker_host})</span>
+                                <br><span style="font-size:0.7rem; color:var(--text-muted);">(${num_dev} TB | Broker: ${p.broker_host})</span>
                             </td>
                             <td style="padding: 0.4rem; text-align: right;">
                                 <button class="btn-stop-single" data-pid="${p.pid}" style="background: #ef4444; color:#fff; border:none; padding:0.2rem 0.4rem; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:600; transition:all 0.2s; white-space:nowrap;">DỪNG 🛑</button>
