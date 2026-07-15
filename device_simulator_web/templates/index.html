@@ -416,11 +416,11 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="DEVICE_ID_PREFIX">Tiền tố ID thiết bị</label>
-                                <input type="text" id="DEVICE_ID_PREFIX" required>
+                                <input type="text" id="DEVICE_ID_PREFIX">
                             </div>
                             <div class="form-group">
                                 <label for="DEVICE_CODE_PREFIX">Tiền tố mã thiết bị (VD: 'b' -> b00000001)</label>
-                                <input type="text" id="DEVICE_CODE_PREFIX" required>
+                                <input type="text" id="DEVICE_CODE_PREFIX">
                             </div>
                         </div>
                         <div class="form-group">
@@ -500,8 +500,30 @@
                         <span id="status-dot" class="dot"></span>
                         <span id="status-text">Đang kết nối...</span>
                     </div>
-                    <div id="control-buttons">
-                        <button id="btn-toggle" class="btn btn-success">BẮT ĐẦU</button>
+                    <div id="control-buttons" style="display: flex; gap: 0.5rem;">
+                        <button id="btn-toggle" class="btn btn-success">BẮT ĐẦU MỚI 🚀</button>
+                        <button id="btn-stop-all" class="btn btn-danger" style="display: none; white-space: nowrap;">DỪNG TẤT CẢ 🛑</button>
+                    </div>
+                </div>
+
+                <!-- Bảng danh sách tiến trình đang chạy -->
+                <div id="active-processes-section" style="margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Danh sách dải thiết bị đang chạy:</div>
+                    <div style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2);">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border-color);">
+                                    <th style="padding: 0.4rem; font-weight: 600;">PID</th>
+                                    <th style="padding: 0.4rem; font-weight: 600;">Dải ID Thiết Bị</th>
+                                    <th style="padding: 0.4rem; font-weight: 600; text-align: right;">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody id="processes-list-body">
+                                <tr>
+                                    <td colspan="3" style="padding: 0.5rem; text-align: center; color: var(--text-muted);">Không có dải giả lập nào đang chạy.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -553,7 +575,7 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <script src="/static/js/app.js?v=1.2"></script>
+    <script src="/static/js/app.js?v=1.4"></script>
 </body>
 
 </html>
