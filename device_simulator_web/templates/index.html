@@ -500,7 +500,7 @@
         </div>
 
         <!-- Ở giữa: Điều khiển -->
-        <div style="display: flex; flex-direction: column; gap: 2rem;">
+        <div style="display: flex; flex-direction: column; gap: 2rem; align-self: start;">
             <!-- Trạng thái & Nút Start/Stop -->
             <div class="card">
                 <h2 class="card-title">🖥️ Trạng thái & Điều khiển</h2>
@@ -541,13 +541,13 @@
         </div>
 
         <!-- Bên phải: Danh sách Kịch bản theo thiết bị -->
-        <div class="card" id="scenes-section" style="margin-top: 0;">
+        <div class="card" id="scenes-section" style="margin-top: 0; align-self: start;">
             <h2 class="card-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">📋 Danh sách kịch bản theo thiết bị</h2>
             <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 0.75rem; color: var(--text-muted);">Cập nhật thủ công bằng nút Làm mới</span>
                 <button id="btn-refresh-scenes" class="btn" style="padding: 2px 8px; font-size: 0.75rem; background: #3b82f6; color: #fff; height: 22px; border-radius: 4px;">🔄 Làm mới</button>
             </div>
-            <div style="max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); padding: 0.5rem;">
+            <div style="border: 1px solid var(--border-color); border-radius: 6px; background: rgba(0,0,0,0.2); padding: 0.5rem;">
                 <div id="scenes-list-container" style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.6rem;">
                     <div style="text-align: center; color: var(--text-muted); padding: 0.5rem;">Không có kịch bản nào được thiết lập.</div>
                 </div>
