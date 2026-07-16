@@ -28,6 +28,7 @@ START_INDEX = 0
 DEVICE_CODE_PREFIX = "b"
 DEVICE_ID_PREFIX = "rd_"
 TELEMETRY_INTERVAL = 50
+MQTT_CONN_RATE = 20
 LOG_FILE_CSV = "logs/device_stats.csv"
 LOG_INTERVAL = 60
 TELEMETRY_TOPIC = "v1/devices/me/telemetry"
@@ -56,6 +57,7 @@ if os.path.exists(config_path):
             DEVICE_CODE_PREFIX = cfg.get("DEVICE_CODE_PREFIX", DEVICE_CODE_PREFIX)
             DEVICE_ID_PREFIX = cfg.get("DEVICE_ID_PREFIX", DEVICE_ID_PREFIX)
             TELEMETRY_INTERVAL = int(cfg.get("TELEMETRY_INTERVAL", TELEMETRY_INTERVAL))
+            MQTT_CONN_RATE = int(cfg.get("MQTT_CONN_RATE", MQTT_CONN_RATE))
             LOG_FILE_CSV = cfg.get("LOG_FILE_CSV", LOG_FILE_CSV)
             LOG_INTERVAL = int(cfg.get("LOG_INTERVAL", LOG_INTERVAL))
             TELEMETRY_TOPIC = cfg.get("TELEMETRY_TOPIC", TELEMETRY_TOPIC)
@@ -73,6 +75,30 @@ os.makedirs(os.path.dirname(LOG_FILE_CSV) or "logs", exist_ok=True)
 
 client_lock = threading.Lock()
 all_devices = []
+
+def save_device_scenes(device_id, scene_db):
+    try:
+        padding_len = len(str(END_INDEX))
+        first_num = START_INDEX + 1
+        first_dev = f"{DEVICE_CODE_PREFIX}{first_num:0{padding_len}d}"
+        last_dev = f"{DEVICE_CODE_PREFIX}{END_INDEX:0{padding_len}d}"
+        broker_safe = BROKER_HOST.replace('.', '_').replace(':', '_')
+        suffix = f"{first_dev}_{last_dev}__{broker_safe}"
+        
+        folder = os.path.join("logs", f"scenes_{suffix}")
+        os.makedirs(folder, exist_ok=True)
+        
+        scenes_data = {}
+        for sid, info in scene_db.items():
+            scenes_data[sid] = {
+                "condition": info.get("condition", {}),
+                "execute": info.get("execute", {})
+            }
+            
+        with open(os.path.join(folder, f"{device_id}.json"), "w", encoding="utf-8") as f:
+            json.dump(scenes_data, f, indent=4, ensure_ascii=False)
+    except Exception as e:
+        print(f"Lỗi lưu file kịch bản của thiết bị {device_id}: {e}")
 
 class DeviceClient:
     def __init__(self, index: int):
@@ -121,10 +147,11 @@ class DeviceClient:
 
     def _connect(self):
         try:
-            self.client.connect(BROKER_HOST, BROKER_PORT, keepalive=60)
+            # Sử dụng connect_async để paho tự động kết nối ngầm (kể cả khi broker chưa bật lúc khởi động)
+            self.client.connect_async(BROKER_HOST, BROKER_PORT, keepalive=60)
             self.client.loop_start()
         except Exception as e:
-            print(f"[{self.device_id}] ❌ Lỗi kết nối MQTT: {e}")
+            print(f"[{self.device_id}] ❌ Lỗi khởi chạy kết nối MQTT: {e}")
             self.connected = False
 
     def on_connect(self, client, userdata, flags, rc):
@@ -138,13 +165,7 @@ class DeviceClient:
 
     def on_disconnect(self, client, userdata, rc):
         self.connected = False
-        print(f"[{self.device_id}] ⚠️ Mất kết nối, thử reconnect...")
-        while not self.connected:
-            try:
-                time.sleep(3)
-                self._connect()
-            except Exception:
-                pass
+        print(f"[{self.device_id}] ⚠️ Mất kết nối MQTT (code={rc}). Đang tự động reconnect ngầm...")
 
     def on_message(self, client, userdata, msg):
         self.received_messages += 1
@@ -204,6 +225,17 @@ class DeviceClient:
                             "last_run_minute": None
                         }
                         self.telemetry_db["number_scene"] = len(self.scene_db)
+                        save_device_scenes(self.device_id, self.scene_db)
+                
+                elif req_method == "deleteScene":
+                    params = payload.get("params", {})
+                    scene_id = params.get("id")
+                    print(f"[{self.device_id}] 🗑️ Nhận deleteScene params: {params}")
+                    if scene_id is not None:
+                        self.scene_db.pop(scene_id, None)
+                        self.scene_db.pop(str(scene_id), None)
+                        self.telemetry_db["number_scene"] = len(self.scene_db)
+                        save_device_scenes(self.device_id, self.scene_db)
         except Exception as e:
             print(f"Lỗi xử lý on_message trên {self.device_id}: {e}")
 
@@ -387,8 +419,9 @@ if __name__ == "__main__":
         device = DeviceClient(i)
         with client_lock:
             all_devices.append(device)
-        # Giãn cách kết nối 50ms tránh nghẽn luồng
-        time.sleep(0.05)
+        # Giãn cách kết nối tránh nghẽn luồng
+        conn_delay = 1.0 / MQTT_CONN_RATE if MQTT_CONN_RATE > 0 else 0.05
+        time.sleep(conn_delay)
 
     print(f"✅ Đã kết nối xong tất cả {num_devices} thiết bị. Tiến trình đang hoạt động...")
     

@@ -319,8 +319,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 8. Poll and Render Scenes
+    const scenesListContainer = document.getElementById('scenes-list-container');
+    const btnRefreshScenes = document.getElementById('btn-refresh-scenes');
+
+    async function loadScenes() {
+        if (!scenesListContainer) return;
+        try {
+            const res = await fetch('/api/scenes');
+            const data = await res.json();
+            
+            if (Object.keys(data).length === 0) {
+                scenesListContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 0.5rem;">Không có kịch bản nào được thiết lập.</div>';
+                return;
+            }
+
+            // Gom nhóm kịch bản theo Scene ID
+            const groupedScenes = {};
+            for (const [devId, scenes] of Object.entries(data)) {
+                for (const [sceneId, info] of Object.entries(scenes)) {
+                    if (!groupedScenes[sceneId]) {
+                        groupedScenes[sceneId] = {
+                            condition: info.condition,
+                            execute: info.execute,
+                            devices: []
+                        };
+                    }
+                    groupedScenes[sceneId].devices.push(devId);
+                }
+            }
+
+            let html = '';
+            for (const [sceneId, info] of Object.entries(groupedScenes)) {
+                info.devices.sort();
+                html += `
+                <div style="border: 1px solid rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 6px; background: rgba(255,255,255,0.02); margin-bottom: 0.6rem;">
+                    <div style="font-weight: bold; color: #f59e0b; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🎬 Kịch bản ID: ${sceneId}</span>
+                        <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); padding: 2px 8px; border-radius: 10px; color: #34d399;">${info.devices.length} thiết bị</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; padding-left: 0.5rem; border-left: 2px solid var(--border-color);">
+                        <div style="font-size: 0.75rem;"><span style="color: var(--text-muted); font-weight: 600;">Điều kiện:</span> <code style="color: #a7f3d0;">${JSON.stringify(info.condition)}</code></div>
+                        <div style="font-size: 0.75rem;"><span style="color: var(--text-muted); font-weight: 600;">Hành động:</span> <code style="color: #93c5fd;">${JSON.stringify(info.execute)}</code></div>
+                        <div style="font-size: 0.75rem; margin-top: 0.2rem;">
+                            <span style="color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 0.15rem;">Danh sách thiết bị nhận:</span>
+                            <div style="max-height: 85px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 0.3rem 0.5rem; border-radius: 4px; color: #e2e8f0; font-family: monospace; line-height: 1.3; word-break: break-all;">
+                                ${info.devices.join(', ')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+            scenesListContainer.innerHTML = html;
+        } catch (err) {
+            console.error("Lỗi khi tải danh sách kịch bản:", err);
+        }
+    }
+
+    if (btnRefreshScenes) {
+        btnRefreshScenes.addEventListener('click', loadScenes);
+    }
+
     // Khởi chạy ban đầu
     loadConfig();
     pollStatus();
+    loadScenes();
     setInterval(pollStatus, 5000); // Polling mỗi 5 giây để cập nhật nhanh danh sách dải và số liệu
 });

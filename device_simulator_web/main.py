@@ -34,6 +34,7 @@ DEFAULT_CONFIG = {
     "DEVICE_CODE_PREFIX": "b",
     "DEVICE_ID_PREFIX": "rd_",
     "TELEMETRY_INTERVAL": 50,
+    "MQTT_CONN_RATE": 20,
     "LOG_FILE_CSV": "logs/device_stats.csv",
     "LOG_INTERVAL": 60,
     "TELEMETRY_TOPIC": "v1/devices/me/telemetry",
@@ -58,6 +59,7 @@ class ConfigModel(BaseModel):
     DEVICE_CODE_PREFIX: str
     DEVICE_ID_PREFIX: str
     TELEMETRY_INTERVAL: int
+    MQTT_CONN_RATE: int
     LOG_FILE_CSV: str
     LOG_INTERVAL: int
     TELEMETRY_TOPIC: str
@@ -261,6 +263,7 @@ START_INDEX = {config['START_INDEX']}
 DEVICE_CODE_PREFIX = "{config['DEVICE_CODE_PREFIX']}"
 DEVICE_ID_PREFIX = "{config['DEVICE_ID_PREFIX']}"
 TELEMETRY_INTERVAL = {config['TELEMETRY_INTERVAL']}
+MQTT_CONN_RATE = {config['MQTT_CONN_RATE']}
 LOG_FILE_CSV = "logs/device_stats_{suffix}.csv"
 LOG_INTERVAL = {config['LOG_INTERVAL']}
 TELEMETRY_TOPIC = "{config['TELEMETRY_TOPIC']}"
@@ -304,12 +307,25 @@ RESPONSE_RPC_SKIP_END = {config['RESPONSE_RPC_SKIP_END']}
 
 @app.post("/api/stop")
 async def stop_sim(req: StopRequest = None):
-    pids = [req.pid] if (req and req.pid) else [p["pid"] for p in get_sim_processes()]
+    procs = get_sim_processes()
+    pids = [req.pid] if (req and req.pid) else [p["pid"] for p in procs]
     if not pids:
         return {"status": "error", "message": "Không tìm thấy tiến trình nào đang chạy."}
     
     try:
         for pid in pids:
+            # Xóa các file scene tương ứng để làm sạch dữ liệu
+            proc_info = next((p for p in procs if p["pid"] == pid), None)
+            if proc_info:
+                suffix = proc_info["script_name"].replace("script_tool_simulator_device_", "").replace(".py_sim", "")
+                folder = os.path.join("logs", f"scenes_{suffix}")
+                if os.path.exists(folder):
+                    import shutil
+                    try:
+                        shutil.rmtree(folder)
+                    except:
+                        pass
+            
             if os.name == 'nt':
                 subprocess.call(f"taskkill /F /PID {pid}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
@@ -329,3 +345,21 @@ async def get_status():
         "stats": stats,
         "logs": []
     }
+
+@app.get("/api/scenes")
+async def get_scenes():
+    procs = get_sim_processes()
+    results = {}
+    for p in procs:
+        suffix = p["script_name"].replace("script_tool_simulator_device_", "").replace(".py_sim", "")
+        folder = os.path.join("logs", f"scenes_{suffix}")
+        if os.path.exists(folder):
+            for file in os.listdir(folder):
+                if file.endswith(".json"):
+                    dev_id = file[:-5]
+                    try:
+                        with open(os.path.join(folder, file), "r", encoding="utf-8") as f:
+                            results[dev_id] = json.load(f)
+                    except:
+                        pass
+    return results
