@@ -317,18 +317,38 @@
                 const curls = text.split(/curl\s+/i).filter(c => c.trim().length > 0);
                 if (curls.length > 1) {
                     e.preventDefault();
-                    curls.reverse().forEach((c, idx) => {
-                        addFunc(`API Tự động ${curls.length - idx}`, "curl " + c.trim());
-                    });
-                    // Xóa phần tử trống ban đầu (nơi người dùng paste đè danh sách)
+                    
+                    // Lấy giá trị chu kỳ / hiệu năng từ ô gốc
                     const parentItem = e.target.closest('.api-item') || e.target.closest('.basic-api-item');
+                    let rate = 10;
+                    let step = 5;
+                    let interval = 5;
+                    if (parentItem) {
+                        const rateInput = parentItem.querySelector('.api-rate');
+                        const stepInput = parentItem.querySelector('.api-step');
+                        const intervalInput = parentItem.querySelector('.api-interval');
+                        if (rateInput) rate = parseInt(rateInput.value) || 10;
+                        if (stepInput) step = parseInt(stepInput.value) || 5;
+                        if (intervalInput) interval = parseInt(intervalInput.value) || 5;
+                    }
+
+                    curls.reverse().forEach((c, idx) => {
+                        const apiName = `API Tự động ${curls.length - idx}`;
+                        const curlVal = "curl " + c.trim();
+                        if (addFunc === addApiItem) {
+                            addApiItem(apiName, curlVal, rate, step);
+                        } else if (addFunc === addBasicApiItem) {
+                            addBasicApiItem(apiName, curlVal, interval);
+                        }
+                    });
+
                     if (parentItem) {
                         parentItem.remove();
                     }
                 }
             }
 
-            function addApiItem(apiName = null, initValue = "") {
+            function addApiItem(apiName = null, initValue = "", rate = 10, step = 5) {
                 if (!apiName) {
                     apiName = prompt("Nhập tên gợi nhớ cho API này:", `API Hiệu năng ${apiCount + 1}`);
                     if (!apiName) apiName = "Lệnh cURL";
@@ -344,9 +364,9 @@
                 <div class="api-config-row">
                     <div class="api-rates">
                         <label>Start (req/s):</label>
-                        <input type="number" class="api-rate" value="10">
+                        <input type="number" class="api-rate" value="${rate}">
                         <label>Step/5s:</label>
-                        <input type="number" class="api-step" value="5">
+                        <input type="number" class="api-step" value="${step}">
                     </div>
                     <button class="btn btn-secondary btn-remove" data-target="${id}">Xóa</button>
                 </div>
@@ -391,6 +411,11 @@
                 if (isWarning) div.classList.add('warning');
                 div.textContent = msg;
                 logOutput.appendChild(div);
+                
+                while (logOutput.children.length > 20) {
+                    logOutput.removeChild(logOutput.firstChild);
+                }
+                
                 logOutput.scrollTop = logOutput.scrollHeight;
             }
 
@@ -818,7 +843,7 @@
             const apiListBasic = document.getElementById('api-list-basic');
             let apiCountBasic = 0;
 
-            function addBasicApiItem(apiName = null, initValue = "") {
+            function addBasicApiItem(apiName = null, initValue = "", interval = 5) {
                 if (!apiName) {
                     apiName = prompt("Nhập tên gợi nhớ cho API này:", `API Cơ bản ${apiCountBasic + 1}`);
                     if (!apiName) apiName = "Lệnh cURL";
@@ -834,7 +859,7 @@
                 <div class="api-config-row">
                     <div class="api-rates">
                         <label>Chu kỳ (giây):</label>
-                        <input type="number" class="api-interval" value="5">
+                        <input type="number" class="api-interval" value="${interval}">
                     </div>
                     <button class="btn btn-secondary btn-remove-basic" data-target="${id}">Xóa</button>
                 </div>
@@ -874,6 +899,11 @@
                 if (isError) div.classList.add('error');
                 div.textContent = msg;
                 logOutputBasic.appendChild(div);
+                
+                while (logOutputBasic.children.length > 20) {
+                    logOutputBasic.removeChild(logOutputBasic.firstChild);
+                }
+                
                 logOutputBasic.scrollTop = logOutputBasic.scrollHeight;
             }
 
